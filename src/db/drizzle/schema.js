@@ -95,3 +95,56 @@ export const accountRelations = relations(account, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// ─── Connected marketplace accounts (Vinted / eBay) ──────────────────────────
+
+export const connectedAccounts = pgTable(
+  "connected_accounts",
+  {
+    id: text("id").primaryKey(),
+
+    // FK to the Fuki user
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+
+    // "vinted" | "ebay"
+    platform: text("platform").notNull(),
+
+    // Identity info returned by the platform
+    firstName: text("first_name"),
+    lastName: text("last_name"),
+    email: text("email"),
+    platformUserId: text("platform_user_id"), // seller ID / username
+
+    // OAuth tokens
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("ca_userId_idx").on(table.userId),
+    index("ca_platform_idx").on(table.platform),
+  ],
+);
+
+export const connectedAccountRelations = relations(
+  connectedAccounts,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [connectedAccounts.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const userRelations = relations(users, ({ many }) => ({
+  connectedAccounts: many(connectedAccounts),
+}));
+

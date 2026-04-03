@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ShoppingBag, 
@@ -12,12 +12,33 @@ import {
   Link2,
   User,
   LogOut,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react';
 import { authClient, useSession } from '@/src/lib/auth-client';
 
 export default function Dashboard() {
-  const totalAccounts = 0; // will be pulled from context/db later
+  const [counts, setCounts] = useState({ vinted: 0, ebay: 0, total: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCounts() {
+      try {
+        const res = await fetch('/api/connections');
+        if (res.ok) {
+          const data = await res.json();
+          const v = data.connections?.vinted?.length || 0;
+          const e = data.connections?.ebay?.length || 0;
+          setCounts({ vinted: v, ebay: e, total: v + e });
+        }
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchCounts();
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-gray-50 text-gray-900 font-sans">
@@ -35,9 +56,9 @@ export default function Dashboard() {
 
         {/* Quick stats */}
         <div className="grid grid-cols-3 gap-4 mb-10">
-          <StatCard label="Comptes connectés" value="0" icon={<Link2 size={18} />} />
-          <StatCard label="Posts automatisés" value="0" icon={<Store size={18} />} />
-          <StatCard label="Articles en ligne" value="0" icon={<ShoppingBag size={18} />} />
+          <StatCard label="Comptes connectés" value={isLoading ? <Loader2 size={18} className="animate-spin text-emerald-500" /> : counts.total.toString()} icon={<Link2 size={18} />} />
+          <StatCard label="eBay connectés" value={isLoading ? <Loader2 size={18} className="animate-spin text-emerald-500" /> : counts.ebay.toString()} icon={<Store size={18} />} />
+          <StatCard label="Vinted connectés" value={isLoading ? <Loader2 size={18} className="animate-spin text-emerald-500" /> : counts.vinted.toString()} icon={<ShoppingBag size={18} />} />
         </div>
 
         {/* CTA block */}

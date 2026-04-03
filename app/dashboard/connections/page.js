@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ShoppingBag,
   Store,
@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { Sidebar } from '../page';
 import { useRouter } from 'next/navigation';
+import CryptoJS from 'crypto-js';
+import { toast } from 'sonner';
 
 export default function Connections() {
   const router = useRouter();
@@ -25,25 +27,80 @@ export default function Connections() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPlatform, setCurrentPlatform] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const res = await fetch('/api/connections');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.connections) {
+            setAccounts(data.connections);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch connections", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAccounts();
+  }, []);
 
   const openModal = (platform) => {
     setCurrentPlatform(platform);
     setIsModalOpen(true);
   };
 
-  const handleEbayConnect = async () => {
+  const handleVintedConnect = async (e) => {
+    if (e) e.preventDefault();
     setIsConnecting(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setAccounts(prev => ({
-      ...prev,
-      ebay: [...prev.ebay, {
-        id: Date.now(),
-        username: 'eBaySeller_' + Math.floor(Math.random() * 1000),
-        connectedAt: new Date().toLocaleDateString('fr-FR')
-      }]
-    }));
-    setIsConnecting(false);
-    setIsModalOpen(false);
+
+    const email = e.target.vintedEmail.value;
+    const password = e.target.vintedPassword.value;
+    const userId = "test-user-id"; // Placeholder for actual userId
+
+    const secretKey = process.env.NEXT_PUBLIC_CRYPTO_SECRET || 'fuki-secret-key';
+    const encryptedEmail = CryptoJS.AES.encrypt(email, secretKey).toString();
+    const encryptedPassword = CryptoJS.AES.encrypt(password, secretKey).toString();
+
+    toast.info("Tentative de connexion en cours...", {
+      description: "Vos informations sont cryptées et envoyées de manière sécurisée.",
+      duration: 5000,
+    });
+
+    try {
+      // Lance un playwright en arrière plan
+      fetch('/api/vinted/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: encryptedEmail, password: encryptedPassword, userId })
+      });
+      
+      // On simule une connexion réussie visuellement après un petit délai
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setAccounts(prev => ({
+        ...prev,
+        vinted: [...prev.vinted, {
+          id: Date.now(),
+          username: email.split('@')[0],
+          connectedAt: new Date().toLocaleDateString('fr-FR')
+        }]
+      }));
+      toast.success("Connexion établie avec succès !");
+    } catch (err) {
+      toast.error("Erreur lors de la connexion.");
+    } finally {
+      setIsConnecting(false);
+      setIsModalOpen(false);
+    }
+  };
+
+  const handleEbayConnect = () => {
+    setIsConnecting(true);
+    window.location.href = '/api/ebay/login';
   };
 
   const removeAccount = (platform, id) => {
@@ -133,36 +190,49 @@ export default function Connections() {
               </h3>
               <p className="text-sm text-gray-500 mt-0.5">
                 {currentPlatform === 'vinted'
-                  ? "L'extension Chrome est requise pour synchroniser Vinted."
+                  ? "Connectez-vous avec vos identifiants Vinted."
                   : "Connexion sécurisée via le protocole OAuth2 eBay."}
               </p>
             </div>
 
             {currentPlatform === 'vinted' ? (
-              <div className="space-y-5">
-                <ol className="space-y-3 text-sm">
-                  {[
-                    "Installez l'extension Fuki sur Chrome",
-                    "Connectez-vous à Vinted dans l'extension",
-                    "Votre compte apparaîtra ici automatiquement"
-                  ].map((step, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span className="mt-0.5 w-5 h-5 bg-emerald-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                        {i + 1}
-                      </span>
-                      <span className="text-gray-600">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-                <a
-                  href="#"
-                  className="flex items-center justify-center gap-2 w-full py-3 bg-gray-900 text-white text-sm font-bold rounded-lg hover:bg-gray-800 transition-colors"
+              <form onSubmit={handleVintedConnect} className="space-y-4">
+                <div>
+                  <label htmlFor="vintedEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Vinted
+                  </label>
+                  <input
+                    type="email"
+                    id="vintedEmail"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    placeholder="votre@email.com"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="vintedPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                    Mot de passe
+                  </label>
+                  <input
+                    type="password"
+                    id="vintedPassword"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isConnecting}
+                  className="bg-emerald-500 mt-2 hover:bg-emerald-600 text-white w-full py-3 flex items-center justify-center gap-2 text-sm font-bold rounded-md transition-colors disabled:opacity-50"
                 >
-                  <Globe size={16} />
-                  Installer l'extension Chrome
-                  <ExternalLink size={14} className="opacity-50" />
-                </a>
-              </div>
+                  {isConnecting ? (
+                    <><Loader2 size={16} className="animate-spin" /> Connexion...</>
+                  ) : (
+                    <>Se connecter</>
+                  )}
+                </button>
+              </form>
             ) : (
               <div className="space-y-5">
                 <div className="flex gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-gray-600">

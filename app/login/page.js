@@ -21,7 +21,10 @@ export default function LoginPage() {
           {/* Header Section with Icon */}
           <div className="text-center space-y-4">
             <div className="mx-auto w-12 h-12 flex items-center justify-center">
-              <DoorOpen className="w-10 h-10 text-blue-600" strokeWidth={2.5} />
+              <DoorOpen
+                className="w-10 h-10 text-[#10b981]"
+                strokeWidth={2.5}
+              />
             </div>
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
