@@ -3,6 +3,7 @@ import { connectedAccounts } from "@/src/db/drizzle/schema";
 import { auth } from "@/src/lib/auth";
 import { nanoid } from "nanoid";
 import { headers } from "next/headers";
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
@@ -118,21 +119,48 @@ export async function GET(request) {
   // ─── 4. Upsert into connected_accounts ──────────────────────────────────────
   const accessTokenExpiresAt = new Date(Date.now() + expiresIn * 1000);
 
-  await db
-    .insert(connectedAccounts)
-    .values({
-      id: nanoid(),
-      userId: session.user.id,
-      platform: "ebay",
-      firstName,
-      lastName,
-      email,
-      platformUserId,
-      accessToken,
-      refreshToken,
-      accessTokenExpiresAt,
-    })
-    .onConflictDoNothing(); // simple insert — extend with upsert logic if needed
+  // Check if account already exists for this user and platformUserId
+  let existingAccount = null;
+  if (platformUserId) {
+    existingAccount = await db.query.connectedAccounts.findFirst({
+      where: (ca, { and, eq }) => and(
+        eq(ca.userId, session.user.id),
+        eq(ca.platform, "ebay"),
+        eq(ca.platformUserId, platformUserId)
+      )
+    });
+  }
+
+  if (existingAccount) {
+    // Update existing account
+    await db.update(connectedAccounts)
+      .set({
+        firstName,
+        lastName,
+        email,
+        accessToken,
+        refreshToken,
+        accessTokenExpiresAt,
+        updatedAt: new Date()
+      })
+      .where(eq(connectedAccounts.id, existingAccount.id));
+  } else {
+    // Create new account
+    await db
+      .insert(connectedAccounts)
+      .values({
+        id: nanoid(),
+        userId: session.user.id,
+        platform: "ebay",
+        firstName,
+        lastName,
+        email,
+        platformUserId,
+        accessToken,
+        refreshToken,
+        accessTokenExpiresAt,
+      });
+  }
 
   return NextResponse.redirect(
     new URL("/dashboard/connections?success=ebay", request.url),
