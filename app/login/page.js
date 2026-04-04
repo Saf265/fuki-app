@@ -1,6 +1,7 @@
 import { DoorOpen } from "lucide-react";
 import Link from "next/link";
 import LoginForm from "./LoginForm";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Connexion | Fuki",
@@ -36,7 +37,13 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <LoginForm />
+          <Suspense fallback={
+            <div className="flex flex-col items-center justify-center py-8 space-y-4 animate-in fade-in">
+              <span className="w-8 h-8 border-4 border-gray-100 border-t-[#10b981] rounded-full animate-spin" />
+            </div>
+          }>
+            <LoginForm />
+          </Suspense>
         </div>
       </div>
 

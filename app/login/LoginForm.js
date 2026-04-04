@@ -1,36 +1,76 @@
 "use client";
 
+import ExtensionSync from "@/src/components/ExtensionSync";
 import { authClient } from "@/src/lib/auth-client";
-import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function LoginForm() {
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const { data: session, isPending } = authClient.useSession();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const fromExtension = searchParams.get("from") === "extension";
+
+  useEffect(() => {
+    // Si on vient de l'extension et qu'on a déjà une session, on synchronise
+    if (fromExtension && !isPending && session) {
+      handleExtensionSync();
+    }
+  }, [fromExtension, isPending, session]);
+
+  async function handleExtensionSync() {
+    setSyncing(true);
+    // On laisse un petit délai pour l'UX (optionnel)
+    setTimeout(() => {
+      router.push("/login/success");
+    }, 1500);
+  }
 
   async function handleGoogleSignIn() {
     setLoading(true);
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: fromExtension ? "/login?from=extension" : "/dashboard",
     });
     setLoading(false);
   }
 
+  // --- RENDERING ---
+
   return (
     <div className="space-y-4">
-      <button
-        id="btn-google-signin"
-        type="button"
-        onClick={handleGoogleSignIn}
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {loading ? (
-          <span className="w-5 h-5 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
-        ) : (
-          <GoogleIcon />
-        )}
-        <span>{loading ? "Redirection…" : "Continuer avec Google"}</span>
-      </button>
+      {fromExtension && <ExtensionSync />}
+
+      {/* Loader si on est en train de vérifier la session ou de synchroniser (seulement pour l'extension) */}
+      {fromExtension && (isPending || syncing) ? (
+        <div className="flex flex-col items-center justify-center py-8 space-y-4">
+          <Loader2 className="w-8 h-8 text-[#10b981] animate-spin" />
+          <p className="text-sm text-gray-500 font-medium">
+            {syncing
+              ? "Synchronisation avec l'extension..."
+              : "Vérification..."}
+          </p>
+        </div>
+      ) : (
+        <button
+          id="btn-google-signin"
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {loading ? (
+            <span className="w-5 h-5 border-2 border-gray-200 border-t-[#10b981] rounded-full animate-spin" />
+          ) : (
+            <GoogleIcon />
+          )}
+          <span>{loading ? "Redirection…" : "Continuer avec Google"}</span>
+        </button>
+      )}
     </div>
   );
 }
