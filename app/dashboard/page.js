@@ -13,6 +13,7 @@ import {
   User,
   LogOut,
   ArrowRight,
+  MessageSquare,
   Loader2
 } from 'lucide-react';
 import { authClient, useSession } from '@/src/lib/auth-client';
@@ -101,6 +102,7 @@ export function Sidebar({ active }) {
 
   const links = [
     { id: 'dashboard', label: 'Tableau de bord', icon: <LayoutDashboard size={18} />, href: '/dashboard' },
+    { id: 'messages', label: 'Messagerie', icon: <MessageSquare size={18} />, href: '/dashboard/messages' },
     { id: 'connections', label: 'Connexions', icon: <Link2 size={18} />, href: '/dashboard/connections' },
     { id: 'history', label: 'Historique', icon: <History size={18} />, href: '/dashboard/history' },
     { id: 'settings', label: 'Paramètres', icon: <Settings size={18} />, href: '/dashboard/settings' },
