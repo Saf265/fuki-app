@@ -75,6 +75,7 @@ export async function GET(request) {
 
   try {
     console.log("--- DEBUG EBAY IDENTITY FETCH ---");
+    // Try apiz.sandbox.ebay.com first (Newer Identity API)
     const userRes = await fetch(
       "https://apiz.sandbox.ebay.com/commerce/identity/v1/user",
       {
@@ -84,27 +85,42 @@ export async function GET(request) {
     
     if (userRes.ok) {
       const userData = await userRes.json();
-      console.log("User Data Received:", JSON.stringify(userData, null, 2));
-      platformUserId = userData.userId ?? userData.username ?? null;
-      email = userData.email ?? null;
+      console.log("Full User Data Received:", JSON.stringify(userData, null, 2));
       
-      // Try to get name from individual OR business account
+      // Capture platform ID
+      platformUserId = userData.userId || userData.username || null;
+      
+      // Capture Email
+      email = userData.email || null;
+      
+      // Capture Name (Individual)
       if (userData.individualAccount) {
-        firstName = userData.individualAccount.firstName ?? null;
-        lastName = userData.individualAccount.lastName ?? null;
-      } else if (userData.businessAccount) {
-        firstName = userData.businessAccount.contactFirstName ?? null;
-        lastName = userData.businessAccount.contactLastName ?? null;
-        // fallback to business name if no contact name
-        if (!firstName) firstName = userData.businessAccount.businessName;
+        firstName = userData.individualAccount.firstName || null;
+        lastName = userData.individualAccount.lastName || null;
+        if (!email && userData.individualAccount.email) {
+          email = userData.individualAccount.email;
+        }
+      } 
+      // Capture Name (Business)
+      if (userData.businessAccount) {
+        firstName = userData.businessAccount.contactFirstName || userData.businessAccount.businessName || null;
+        lastName = userData.businessAccount.contactLastName || null;
+        if (!email && userData.businessAccount.email) {
+          email = userData.businessAccount.email;
+        }
       }
+
+      console.log("Extracted Identity:", { firstName, lastName, email, platformUserId });
     } else {
       const errorText = await userRes.text();
-      console.error("eBay Identity Fetch Failed:", userRes.status, errorText);
+      console.error("eBay Identity Fetch Failed (HTTP " + userRes.status + "):", errorText);
+      
+      // Fallback: If identity API fails, we still have the tokens, so we'll continue 
+      // with just the tokens and a generic ID if needed.
     }
     console.log("------------------");
   } catch (e) {
-    console.warn("Could not fetch eBay user identity:", e.message);
+    console.warn("Exception during eBay identity fetch:", e.message);
   }
 
   // ─── 3. Get current Fuki session ────────────────────────────────────────────
