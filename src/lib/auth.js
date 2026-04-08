@@ -1,9 +1,9 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { eq } from "drizzle-orm";
 import { db } from "../db/drizzle/index";
 import * as schema from "../db/drizzle/schema";
 import { stripe } from "./stripe";
-import { jwt } from "better-auth/plugins";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -36,8 +36,8 @@ export const auth = betterAuth({
 
           await db
             .update(schema.users)
-            .set({ stripeCustomerId })
-            .where({ id: user.id });
+            .set({ stripeCustomerId, plan: "USER" })
+            .where(eq(schema.users.id, user.id));
         },
       },
     },

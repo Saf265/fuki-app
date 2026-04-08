@@ -11,11 +11,11 @@ import {
   Loader2,
   CheckCircle2,
   X,
-  Trash2
+  Trash2,
+  ChevronDown
 } from 'lucide-react';
 import { Sidebar } from '../page';
 import { useRouter } from 'next/navigation';
-import CryptoJS from 'crypto-js';
 import { toast } from 'sonner';
 
 export default function Connections() {
@@ -28,6 +28,19 @@ export default function Connections() {
   const [currentPlatform, setCurrentPlatform] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedRegion, setSelectedRegion] = useState('fr');
+  const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
+
+  const regions = [
+    { id: 'fr', name: 'France', domain: 'vinted.fr' },
+    { id: 'de', name: 'Allemagne', domain: 'vinted.de' },
+    { id: 'es', name: 'Espagne', domain: 'vinted.es' },
+    { id: 'it', name: 'Italie', domain: 'vinted.it' },
+    { id: 'nl', name: 'Pays-Bas', domain: 'vinted.nl' },
+    { id: 'pl', name: 'Pologne', domain: 'vinted.pl' },
+    { id: 'uk', name: 'Royaume-Uni', domain: 'vinted.co.uk' },
+    { id: 'us', name: 'États-Unis', domain: 'vinted.com' }
+  ];
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -53,49 +66,57 @@ export default function Connections() {
     setIsModalOpen(true);
   };
 
-  const handleVintedConnect = async (e) => {
-    if (e) e.preventDefault();
+  const handleVintedConnect = async () => {
+    const newTab = window.open('about:blank', '_blank');
     setIsConnecting(true);
-
-    const email = e.target.vintedEmail.value;
-    const password = e.target.vintedPassword.value;
-    const userId = "test-user-id"; // Placeholder for actual userId
-
-    const secretKey = process.env.NEXT_PUBLIC_CRYPTO_SECRET || 'fuki-secret-key';
-    const encryptedEmail = CryptoJS.AES.encrypt(email, secretKey).toString();
-    const encryptedPassword = CryptoJS.AES.encrypt(password, secretKey).toString();
-
-    toast.info("Tentative de connexion en cours...", {
-      description: "Vos informations sont cryptées et envoyées de manière sécurisée.",
-      duration: 5000,
-    });
-
     try {
-      // Lance un playwright en arrière plan
-      fetch('/api/vinted/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: encryptedEmail, password: encryptedPassword, userId })
-      });
+      const regionData = regions.find(r => r.id === selectedRegion) || regions[0];
+      const res = await fetch(`/api/vinted/sync-token?domain=${regionData.domain}`);
+      if (!res.ok) {
+        newTab.close();
+        throw new Error("Failed to get sync token");
+      }
+      const { token } = await res.json();
       
-      // On simule une connexion réussie visuellement après un petit délai
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Ouvrir Vinted dans l'onglet déjà créé
+      newTab.location.href = `https://www.${regionData.domain}/?utm_id=${token}`;
       
-      setAccounts(prev => ({
-        ...prev,
-        vinted: [...prev.vinted, {
-          id: Date.now(),
-          username: email.split('@')[0],
-          connectedAt: new Date().toLocaleDateString('fr-FR')
-        }]
-      }));
-      toast.success("Connexion établie avec succès !");
+      // Commencer le polling pour détecter le nouveau compte
+      const initialCount = accounts.vinted.length;
+      const checkInterval = setInterval(async () => {
+        try {
+          const res = await fetch('/api/connections');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.connections.vinted.length > initialCount) {
+              setAccounts(data.connections);
+              toast.success("Compte Vinted connecté avec succès !");
+              setIsConnecting(false);
+              setIsModalOpen(false);
+              clearInterval(checkInterval);
+            }
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+        }
+      }, 3000);
+
+      // Nettoyer l'intervalle si on ferme la modal ou après 2 minutes
+      window._vintedPoll = checkInterval;
     } catch (err) {
+      if (newTab && !newTab.closed) newTab.close();
       toast.error("Erreur lors de la connexion.");
-    } finally {
       setIsConnecting(false);
-      setIsModalOpen(false);
     }
+  };
+
+  const cancelVintedConnect = () => {
+    if (window._vintedPoll) {
+      clearInterval(window._vintedPoll);
+      window._vintedPoll = null;
+    }
+    setIsConnecting(false);
+    toast.info("Connexion annulée.");
   };
 
   const handleEbayConnect = () => {
@@ -190,49 +211,89 @@ export default function Connections() {
               </h3>
               <p className="text-sm text-gray-500 mt-0.5">
                 {currentPlatform === 'vinted'
-                  ? "Connectez-vous avec vos identifiants Vinted."
+                  ? "Connectez votre compte Vinted en toute simplicité."
                   : "Connexion sécurisée via le protocole OAuth2 eBay."}
               </p>
             </div>
 
             {currentPlatform === 'vinted' ? (
-              <form onSubmit={handleVintedConnect} className="space-y-4">
-                <div>
-                  <label htmlFor="vintedEmail" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Vinted
-                  </label>
-                  <input
-                    type="email"
-                    id="vintedEmail"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    placeholder="votre@email.com"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="vintedPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                    Mot de passe
-                  </label>
-                  <input
-                    type="password"
-                    id="vintedPassword"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    placeholder="••••••••"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isConnecting}
-                  className="bg-emerald-500 mt-2 hover:bg-emerald-600 text-white w-full py-3 flex items-center justify-center gap-2 text-sm font-bold rounded-md transition-colors disabled:opacity-50"
-                >
-                  {isConnecting ? (
-                    <><Loader2 size={16} className="animate-spin" /> Connexion...</>
-                  ) : (
-                    <>Se connecter</>
-                  )}
-                </button>
-              </form>
+              <div className="space-y-6">
+                {!isConnecting ? (
+                  <>
+                    <div className="flex gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-gray-600">
+                      <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <p>Vous allez être redirigé vers <strong>{regions.find(r => r.id === selectedRegion)?.domain || 'Vinted.fr'}</strong>. L'extension Fuki s'occupera du reste.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">
+                        Région Vinted
+                      </label>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setIsRegionDropdownOpen(!isRegionDropdownOpen)}
+                          className="w-full bg-white border border-gray-200 rounded-md px-4 py-3 text-sm font-semibold flex items-center justify-between hover:border-emerald-500 transition-all focus:outline-none"
+                        >
+                          <span className="flex items-center gap-2">
+                            <Globe size={16} className="text-emerald-500" />
+                            {regions.find(r => r.id === selectedRegion)?.name} 
+                            <span className="text-gray-400 font-normal">({regions.find(r => r.id === selectedRegion)?.domain})</span>
+                          </span>
+                          <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${isRegionDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        
+                        {isRegionDropdownOpen && (
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-md shadow-xl z-50 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                              {regions.map((region) => (
+                                <button
+                                  key={region.id}
+                                  onClick={() => {
+                                    setSelectedRegion(region.id);
+                                    setIsRegionDropdownOpen(false);
+                                  }}
+                                  className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-emerald-50 transition-colors ${selectedRegion === region.id ? 'bg-emerald-50 text-emerald-600 font-bold' : 'text-gray-700'}`}
+                                >
+                                  <span>{region.name} <span className="text-[10px] opacity-60 ml-1">{region.domain}</span></span>
+                                  {selectedRegion === region.id && <CheckCircle2 size={14} className="text-emerald-500" />}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleVintedConnect}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white w-full py-3 flex items-center justify-center gap-2 text-sm font-bold rounded-md transition-colors shadow-sm active:scale-[0.98]"
+                    >
+                      Continuer sur Vinted
+                    </button>
+                  </>
+                ) : (
+                  <div className="py-8 text-center space-y-6 animate-in fade-in zoom-in duration-300">
+                    <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+                      <div className="absolute inset-0 border-4 border-emerald-100 rounded-full" />
+                      <div className="absolute inset-0 border-4 border-emerald-500 rounded-full border-t-transparent animate-spin" />
+                      <ShoppingBag size={32} className="text-emerald-500" />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-gray-900">En attente de connexion...</h4>
+                      <p className="text-xs text-gray-500 max-w-[240px] mx-auto">
+                        Veuillez vous connecter sur l'onglet Vinted qui vient de s'ouvrir.
+                      </p>
+                    </div>
+                    <button
+                      onClick={cancelVintedConnect}
+                      className="text-xs font-bold text-gray-400 hover:text-rose-500 transition-colors uppercase tracking-wider"
+                    >
+                      Annuler la synchronisation
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="space-y-5">
                 <div className="flex gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-gray-600">

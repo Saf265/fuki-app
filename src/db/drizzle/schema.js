@@ -1,13 +1,5 @@
 import { relations } from "drizzle-orm";
-import {
-  boolean,
-  index,
-  integer,
-  json,
-  pgTable,
-  text,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -15,7 +7,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-
+  plan: text("plan"),
+  stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -41,6 +34,16 @@ export const session = pgTable(
   },
   (table) => [index("session_userId_idx").on(table.userId)],
 );
+
+export const pendingSyncs = pgTable("pending_syncs", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull(),
+  domain: text("domain"),
+  expiresAt: timestamp("expires_at").notNull(),
+});
 
 export const account = pgTable(
   "account",
@@ -114,13 +117,15 @@ export const connectedAccounts = pgTable(
     // Identity info returned by the platform
     firstName: text("first_name"),
     lastName: text("last_name"),
-    email: text("email"),
     platformUserId: text("platform_user_id"), // seller ID / username
+    gaClientId: text("ga_client_id"),
 
     // OAuth tokens
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     accessTokenExpiresAt: timestamp("access_token_expires_at"),
+
+    domain: text("domain"),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -147,4 +152,3 @@ export const connectedAccountRelations = relations(
 export const userRelations = relations(users, ({ many }) => ({
   connectedAccounts: many(connectedAccounts),
 }));
-

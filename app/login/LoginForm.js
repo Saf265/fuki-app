@@ -24,10 +24,7 @@ export default function LoginForm() {
 
   async function handleExtensionSync() {
     setSyncing(true);
-    // On laisse un petit délai pour l'UX (optionnel)
-    setTimeout(() => {
-      router.push("/login/success");
-    }, 1500);
+    router.push("/login/success");
   }
 
   async function handleGoogleSignIn() {

@@ -26,7 +26,7 @@ export async function GET(request) {
     userAccounts.forEach(account => {
       const formattedAccount = {
         id: account.id,
-        username: account.platformUserId || account.email || account.firstName || "Utilisateur",
+        username: account.platformUserId || account.firstName || "Utilisateur",
         connectedAt: new Date(account.createdAt || Date.now()).toLocaleDateString("fr-FR"),
         platform: account.platform
       };

@@ -20,13 +20,21 @@ CREATE TABLE "connected_accounts" (
 	"platform" text NOT NULL,
 	"first_name" text,
 	"last_name" text,
-	"email" text,
 	"platform_user_id" text,
 	"access_token" text,
 	"refresh_token" text,
 	"access_token_expires_at" timestamp,
+	"domain" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "pending_syncs" (
+	"id" text PRIMARY KEY NOT NULL,
+	"user_id" text NOT NULL,
+	"token" text NOT NULL,
+	"domain" text,
+	"expires_at" timestamp NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "session" (
@@ -47,6 +55,8 @@ CREATE TABLE "users" (
 	"email" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
+	"plan" text,
+	"stripe_customer_id" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
@@ -63,6 +73,7 @@ CREATE TABLE "verification" (
 --> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "connected_accounts" ADD CONSTRAINT "connected_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "pending_syncs" ADD CONSTRAINT "pending_syncs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "ca_userId_idx" ON "connected_accounts" USING btree ("user_id");--> statement-breakpoint
