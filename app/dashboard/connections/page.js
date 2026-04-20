@@ -1,51 +1,34 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
 import {
+  CheckCircle2,
+  Loader2,
+  Plus,
   ShoppingBag,
   Store,
-  Plus,
-  User,
-  Globe,
-  ExternalLink,
-  Loader2,
-  CheckCircle2,
-  X,
   Trash2,
-  ChevronDown
-} from 'lucide-react';
-import { Sidebar } from '../page';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+  X,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Sidebar } from "../page";
 
 export default function Connections() {
   const router = useRouter();
   const [accounts, setAccounts] = useState({
     vinted: [],
-    ebay: []
+    ebay: [],
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPlatform, setCurrentPlatform] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedRegion, setSelectedRegion] = useState('fr');
-  const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
-
-  const regions = [
-    { id: 'fr', name: 'France', domain: 'vinted.fr' },
-    { id: 'de', name: 'Allemagne', domain: 'vinted.de' },
-    { id: 'es', name: 'Espagne', domain: 'vinted.es' },
-    { id: 'it', name: 'Italie', domain: 'vinted.it' },
-    { id: 'nl', name: 'Pays-Bas', domain: 'vinted.nl' },
-    { id: 'pl', name: 'Pologne', domain: 'vinted.pl' },
-    { id: 'uk', name: 'Royaume-Uni', domain: 'vinted.co.uk' },
-    { id: 'us', name: 'États-Unis', domain: 'vinted.com' }
-  ];
 
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const res = await fetch('/api/connections');
+        const res = await fetch("/api/connections");
         if (res.ok) {
           const data = await res.json();
           if (data.connections) {
@@ -67,25 +50,24 @@ export default function Connections() {
   };
 
   const handleVintedConnect = async () => {
-    const newTab = window.open('about:blank', '_blank');
+    const newTab = window.open("about:blank", "_blank");
     setIsConnecting(true);
     try {
-      const regionData = regions.find(r => r.id === selectedRegion) || regions[0];
-      const res = await fetch(`/api/vinted/sync-token?domain=${regionData.domain}`);
+      const res = await fetch("/api/vinted/sync-token?domain=vinted.com");
       if (!res.ok) {
         newTab.close();
         throw new Error("Failed to get sync token");
       }
       const { token } = await res.json();
-      
+
       // Ouvrir Vinted dans l'onglet déjà créé
-      newTab.location.href = `https://www.${regionData.domain}/?utm_id=${token}`;
-      
+      newTab.location.href = `https://www.vinted.com/?utm_id=${token}`;
+
       // Commencer le polling pour détecter le nouveau compte
       const initialCount = accounts.vinted.length;
       const checkInterval = setInterval(async () => {
         try {
-          const res = await fetch('/api/connections');
+          const res = await fetch("/api/connections");
           if (res.ok) {
             const data = await res.json();
             if (data.connections.vinted.length > initialCount) {
@@ -101,7 +83,6 @@ export default function Connections() {
         }
       }, 3000);
 
-      // Nettoyer l'intervalle si on ferme la modal ou après 2 minutes
       window._vintedPoll = checkInterval;
     } catch (err) {
       if (newTab && !newTab.closed) newTab.close();
@@ -121,13 +102,13 @@ export default function Connections() {
 
   const handleEbayConnect = () => {
     setIsConnecting(true);
-    window.location.href = '/api/ebay/login';
+    window.location.href = "/api/ebay/login";
   };
 
   const removeAccount = (platform, id) => {
-    setAccounts(prev => ({
+    setAccounts((prev) => ({
       ...prev,
-      [platform]: prev[platform].filter(a => a.id !== id)
+      [platform]: prev[platform].filter((a) => a.id !== id),
     }));
   };
 
@@ -139,7 +120,10 @@ export default function Connections() {
       <Sidebar active="connections" />
 
       {/* Main Content */}
-      <main className="flex-1 ml-64 p-10">
+      <main
+        className="flex-1 p-10 transition-[margin-left] duration-200 ease-in-out"
+        style={{ marginLeft: 'var(--sidebar-w, 16rem)' }}
+      >
         <header className="mb-10">
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 border-l-4 border-emerald-500 pl-4">
             Connexions
@@ -152,9 +136,14 @@ export default function Connections() {
         {/* Summary bar */}
         <div className="flex items-center gap-4 mb-8 p-4 bg-white border border-gray-200 rounded-lg">
           <div className="flex items-center gap-2 text-sm">
-            <div className={`w-2 h-2 rounded-full ${totalAccounts > 0 ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+            <div
+              className={`w-2 h-2 rounded-full ${totalAccounts > 0 ? "bg-emerald-500" : "bg-gray-300"}`}
+            />
             <span className="font-semibold">{totalAccounts}</span>
-            <span className="text-gray-500">compte{totalAccounts !== 1 ? 's' : ''} connecté{totalAccounts !== 1 ? 's' : ''}</span>
+            <span className="text-gray-500">
+              compte{totalAccounts !== 1 ? "s" : ""} connecté
+              {totalAccounts !== 1 ? "s" : ""}
+            </span>
           </div>
           <div className="h-4 w-px bg-gray-200" />
           <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -175,18 +164,18 @@ export default function Connections() {
             icon={<ShoppingBag size={20} />}
             description="Connexion via l'extension Chrome Fuki."
             accounts={accounts.vinted}
-            onAdd={() => openModal('vinted')}
-            onRemove={(id) => removeAccount('vinted', id)}
+            onAdd={() => openModal("vinted")}
+            onRemove={(id) => removeAccount("vinted", id)}
           />
 
           <PlatformSection
             platform="ebay"
             label="eBay"
             icon={<Store size={20} />}
-            description="Connexion via eBay OAuth2."
+            description="Connexion via eBay."
             accounts={accounts.ebay}
-            onAdd={() => openModal('ebay')}
-            onRemove={(id) => removeAccount('ebay', id)}
+            onAdd={() => openModal("ebay")}
+            onRemove={(id) => removeAccount("ebay", id)}
           />
         </div>
       </main>
@@ -204,65 +193,36 @@ export default function Connections() {
 
             <div className="mb-6">
               <div className="w-10 h-10 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 mb-4">
-                {currentPlatform === 'vinted' ? <ShoppingBag size={20} /> : <Store size={20} />}
+                {currentPlatform === "vinted" ? (
+                  <ShoppingBag size={20} />
+                ) : (
+                  <Store size={20} />
+                )}
               </div>
               <h3 className="text-lg font-bold">
-                Connecter {currentPlatform === 'vinted' ? 'Vinted' : 'eBay'}
+                Connecter {currentPlatform === "vinted" ? "Vinted" : "eBay"}
               </h3>
               <p className="text-sm text-gray-500 mt-0.5">
-                {currentPlatform === 'vinted'
+                {currentPlatform === "vinted"
                   ? "Connectez votre compte Vinted en toute simplicité."
                   : "Connexion sécurisée via le protocole OAuth2 eBay."}
               </p>
             </div>
 
-            {currentPlatform === 'vinted' ? (
+            {currentPlatform === "vinted" ? (
               <div className="space-y-6">
                 {!isConnecting ? (
                   <>
                     <div className="flex gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-gray-600">
-                      <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                      <p>Vous allez être redirigé vers <strong>{regions.find(r => r.id === selectedRegion)?.domain || 'Vinted.fr'}</strong>. L'extension Fuki s'occupera du reste.</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">
-                        Région Vinted
-                      </label>
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => setIsRegionDropdownOpen(!isRegionDropdownOpen)}
-                          className="w-full bg-white border border-gray-200 rounded-md px-4 py-3 text-sm font-semibold flex items-center justify-between hover:border-emerald-500 transition-all focus:outline-none"
-                        >
-                          <span className="flex items-center gap-2">
-                            <Globe size={16} className="text-emerald-500" />
-                            {regions.find(r => r.id === selectedRegion)?.name} 
-                            <span className="text-gray-400 font-normal">({regions.find(r => r.id === selectedRegion)?.domain})</span>
-                          </span>
-                          <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${isRegionDropdownOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        
-                        {isRegionDropdownOpen && (
-                          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-md shadow-xl z-50 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                            <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                              {regions.map((region) => (
-                                <button
-                                  key={region.id}
-                                  onClick={() => {
-                                    setSelectedRegion(region.id);
-                                    setIsRegionDropdownOpen(false);
-                                  }}
-                                  className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-emerald-50 transition-colors ${selectedRegion === region.id ? 'bg-emerald-50 text-emerald-600 font-bold' : 'text-gray-700'}`}
-                                >
-                                  <span>{region.name} <span className="text-[10px] opacity-60 ml-1">{region.domain}</span></span>
-                                  {selectedRegion === region.id && <CheckCircle2 size={14} className="text-emerald-500" />}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      <CheckCircle2
+                        size={18}
+                        className="text-emerald-500 flex-shrink-0 mt-0.5"
+                      />
+                      <p>
+                        Vous allez être redirigé vers{" "}
+                        <strong>vinted.com</strong>. L'extension Fuki s'occupera
+                        du reste.
+                      </p>
                     </div>
 
                     <button
@@ -280,9 +240,12 @@ export default function Connections() {
                       <ShoppingBag size={32} className="text-emerald-500" />
                     </div>
                     <div className="space-y-2">
-                      <h4 className="font-bold text-gray-900">En attente de connexion...</h4>
+                      <h4 className="font-bold text-gray-900">
+                        En attente de connexion...
+                      </h4>
                       <p className="text-xs text-gray-500 max-w-[240px] mx-auto">
-                        Veuillez vous connecter sur l'onglet Vinted qui vient de s'ouvrir.
+                        Veuillez vous connecter sur l'onglet Vinted qui vient de
+                        s'ouvrir.
                       </p>
                     </div>
                     <button
@@ -297,8 +260,14 @@ export default function Connections() {
             ) : (
               <div className="space-y-5">
                 <div className="flex gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-gray-600">
-                  <CheckCircle2 size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
-                  <p>Vous allez être redirigé vers <strong>eBay.fr</strong> pour autoriser l'accès à vos annonces.</p>
+                  <CheckCircle2
+                    size={18}
+                    className="text-blue-500 flex-shrink-0 mt-0.5"
+                  />
+                  <p>
+                    Vous allez être redirigé vers <strong>eBay.fr</strong> pour
+                    autoriser l'accès à vos annonces.
+                  </p>
                 </div>
                 <button
                   onClick={handleEbayConnect}
@@ -306,7 +275,10 @@ export default function Connections() {
                   className="bg-emerald-500 hover:bg-emerald-600 text-white w-full py-3 flex items-center justify-center gap-2 text-sm font-bold rounded-md transition-colors disabled:opacity-50"
                 >
                   {isConnecting ? (
-                    <><Loader2 size={16} className="animate-spin" /> Connexion...</>
+                    <>
+                      <Loader2 size={16} className="animate-spin" />{" "}
+                      Connexion...
+                    </>
                   ) : (
                     <>Se connecter avec eBay</>
                   )}
@@ -320,7 +292,15 @@ export default function Connections() {
   );
 }
 
-function PlatformSection({ platform, label, icon, description, accounts, onAdd, onRemove }) {
+function PlatformSection({
+  platform,
+  label,
+  icon,
+  description,
+  accounts,
+  onAdd,
+  onRemove,
+}) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
       {/* Section header */}
@@ -344,7 +324,9 @@ function PlatformSection({ platform, label, icon, description, accounts, onAdd, 
       {/* Account list */}
       {accounts.length === 0 ? (
         <div className="px-6 py-10 text-center">
-          <p className="text-sm text-gray-400">Aucun compte {label} connecté.</p>
+          <p className="text-sm text-gray-400">
+            Aucun compte {label} connecté.
+          </p>
           <button
             onClick={onAdd}
             className="mt-3 text-xs text-emerald-600 font-bold hover:underline"
@@ -354,16 +336,27 @@ function PlatformSection({ platform, label, icon, description, accounts, onAdd, 
         </div>
       ) : (
         <ul className="divide-y divide-gray-100">
-          {accounts.map(account => (
-            <li key={account.id} className="flex items-center justify-between px-6 py-4">
+          {accounts.map((account) => (
+            <li
+              key={account.id}
+              className="flex items-center justify-between px-6 py-4"
+            >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                  <User size={14} />
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-100 flex-shrink-0">
+                  <img
+                    src={platform === "vinted" ? "/vinted.jpeg" : "/ebay.png"}
+                    alt={platform}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{account.username}</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {account.username}
+                  </p>
                   {account.connectedAt && (
-                    <p className="text-[11px] text-gray-400">Connecté le {account.connectedAt}</p>
+                    <p className="text-[11px] text-gray-400">
+                      Connecté le {account.connectedAt}
+                    </p>
                   )}
                 </div>
               </div>
