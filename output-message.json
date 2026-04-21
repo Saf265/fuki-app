@@ -1,0 +1,252 @@
+{
+  "conversation": {
+    "id": 21160542503,
+    "read_by_current_user": true,
+    "read_by_opposite_user": false,
+    "localization": "none",
+    "translated": false,
+    "allow_reply": true,
+    "is_suspicious": false,
+    "is_deletion_restricted": false,
+    "subtitle": "Vous le prenez?",
+    "messages": [
+      {
+        "id": 4306779590,
+        "entity_type": "offer_request_message",
+        "entity": {
+          "offer_request_id": 4306779590,
+          "transaction_id": 18464079750,
+          "user_id": 14006252,
+          "status": 30,
+          "status_title": "Refusée",
+          "body": "17,00 €",
+          "title": "Hey, nathala7 t'a fait une offre",
+          "price_label": "17,00 €",
+          "original_price_label": "26,99 €",
+          "original_price": {
+            "amount": "26.99",
+            "currency_code": "EUR"
+          },
+          "price": {
+            "amount": "17.0",
+            "currency_code": "EUR"
+          },
+          "currency": "EUR",
+          "current": true,
+          "price_fixed": true
+        },
+        "created_at_ts": "2026-03-08T13:21:13+01:00"
+      },
+      {
+        "entity_type": "message",
+        "entity": {
+          "body": "Bonjour, offre acceptée",
+          "photos": [],
+          "user_id": 269919915,
+          "sent_via_mobile": true,
+          "id": 58350700129,
+          "is_hidden": false,
+          "safety_flag": 0
+        },
+        "created_at_ts": "2026-03-08T14:46:11+01:00",
+        "created_time_ago": "08/03/2026"
+      },
+      {
+        "id": 30857733525,
+        "entity_type": "offer_message",
+        "entity": {
+          "price_label": "15,00 €",
+          "price": {
+            "amount": "15.0",
+            "currency_code": "EUR"
+          },
+          "original_price_label": "26,99 €",
+          "original_price": {
+            "amount": "26.99",
+            "currency_code": "EUR"
+          },
+          "currency": "EUR",
+          "user_id": 269919915,
+          "current": true,
+          "price_fixed": true
+        },
+        "created_at_ts": "2026-04-18T19:27:49+02:00"
+      },
+      {
+        "entity_type": "message",
+        "entity": {
+          "body": "Vous le prenez?",
+          "photos": [],
+          "user_id": 269919915,
+          "sent_via_mobile": false,
+          "id": 60879109636,
+          "is_hidden": false,
+          "safety_flag": 0
+        },
+        "created_at_ts": "2026-04-20T19:12:45+02:00",
+        "created_time_ago": "il y a 23 heures"
+      }
+    ],
+    "suggested_messages": [],
+    "transaction": {
+      "id": 18464079750,
+      "status": 1,
+      "offline_verification": false,
+      "offer_id": 30857733525,
+      "buyer_id": 14006252,
+      "seller_id": 269919915,
+      "is_completed": false,
+      "shipping_order_id": 8560660515,
+      "purchase_id": null,
+      "has_warranty": false,
+      "available_actions": [
+        "delete_thread",
+        "mark_as_sold",
+        "offer",
+        "reserve",
+        "sell",
+        "transfer",
+        "use_payments"
+      ],
+      "current_user_side": "seller",
+      "is_bundle": false,
+      "is_reserved": false,
+      "is_business_seller": false,
+      "item_count": 1,
+      "item_id": 7396030168,
+      "item_ids": [
+        7396030168
+      ],
+      "item_title": "Minecraft PS4 (édition physique) - Prix négociable",
+      "item_photo": {
+        "id": 30988655795,
+        "image_no": 1,
+        "width": 800,
+        "height": 800,
+        "dominant_color": "#8D6842",
+        "dominant_color_opaque": "#DDD2C6",
+        "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/f800/1761320381.jpeg?s=77d58ed76cd968921b7401037bdd39a347728fdd",
+        "is_main": true,
+        "thumbnails": [
+          {
+            "type": "thumb70x100",
+            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/70x100/1761320381.jpeg?s=bd46e78d8669bc9f228ce8cb40f8f143456a872f",
+            "width": 70,
+            "height": 100,
+            "original_size": null
+          },
+          {
+            "type": "thumb150x210",
+            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/150x210/1761320381.jpeg?s=c0ce5cfa0f9607716f6d712aa02defb2f265d5c3",
+            "width": 150,
+            "height": 210,
+            "original_size": null
+          },
+          {
+            "type": "thumb310x430",
+            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/310x430/1761320381.jpeg?s=95fef51a91b45414220e1065da62a177699ee809",
+            "width": 310,
+            "height": 430,
+            "original_size": null
+          },
+          {
+            "type": "thumb428x624",
+            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/f800/1761320381.jpeg?s=77d58ed76cd968921b7401037bdd39a347728fdd",
+            "width": 428,
+            "height": 428,
+            "original_size": true
+          },
+          {
+            "type": "thumb624x428",
+            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/f800/1761320381.jpeg?s=77d58ed76cd968921b7401037bdd39a347728fdd",
+            "width": 624,
+            "height": 624,
+            "original_size": true
+          },
+          {
+            "type": "thumb364x428",
+            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/f800/1761320381.jpeg?s=77d58ed76cd968921b7401037bdd39a347728fdd",
+            "width": 364,
+            "height": 364,
+            "original_size": true
+          }
+        ],
+        "high_resolution": {
+          "id": "01_012ff_M88XRx18k2W6j4ARJazrxUD1",
+          "timestamp": 1761320381,
+          "orientation": 0
+        },
+        "is_suspicious": false,
+        "full_size_url": "https://images1.vinted.net/tc/01_012ff_M88XRx18k2W6j4ARJazrxUD1/1761320381.jpeg?s=898be55867d706c50db72c8609aa42e922bb7c84",
+        "is_hidden": false,
+        "extra": {}
+      },
+      "item_url": "https://www.vinted.fr/items/7396030168-minecraft-ps4-edition-physique-prix-negociable",
+      "item_is_closed": false,
+      "offer_price": {
+        "amount": "15.0",
+        "currency_code": "EUR"
+      },
+      "service_fee": {
+        "amount": "1.45",
+        "currency_code": "EUR"
+      },
+      "total_amount_without_tax": {
+        "amount": "16.45",
+        "currency_code": "EUR"
+      },
+      "closet_countdown_end_date": null,
+      "seller_bundle_discount": {
+        "id": 38751617,
+        "user_id": 269919915,
+        "enabled": true,
+        "minimal_item_count": 2,
+        "fraction": "0.05",
+        "discounts": [
+          {
+            "minimal_item_count": 2,
+            "fraction": "0.05"
+          },
+          {
+            "minimal_item_count": 3,
+            "fraction": "0.1"
+          },
+          {
+            "minimal_item_count": 5,
+            "fraction": "0.15"
+          }
+        ]
+      },
+      "seller_item_count": 30,
+      "seller_city": "Montpellier",
+      "shipment_id": null,
+      "shipment_status": null,
+      "package_size_code": null
+    },
+    "opposite_user": {
+      "id": 14006252,
+      "login": "nathala7",
+      "is_system": false,
+      "review_count": 24,
+      "feedback_reputation": 0.96,
+      "is_hated": false,
+      "profile_url": "https://www.vinted.fr/member/14006252",
+      "location_description": "France, Nailloux",
+      "country_code": "FR",
+      "is_on_holiday": false,
+      "photo": null,
+      "is_moderator": false,
+      "is_user_unblockable": false,
+      "last_logged_in_at": "2026-04-19T21:01:01+02:00"
+    },
+    "education": null,
+    "moderated_items": null,
+    "user_has_support_role": false,
+    "safety_education": false,
+    "conversation_url": "https://www.vinted.fr/inbox/21160542503",
+    "seller_discovery_notes": [],
+    "order_details_variant": null,
+    "germany_banner_metadata": null
+  },
+  "code": 0
+}

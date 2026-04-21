@@ -1,60 +1,89 @@
-import { NextResponse } from "next/server";
 import { db } from "@/src/db/drizzle/index";
-import { connectedAccounts } from "@/src/db/drizzle/schema";
+import { connectedAccounts, vintedSessions } from "@/src/db/drizzle/schema";
 import { eq } from "drizzle-orm";
-import { getValidEbayToken } from "@/src/lib/ebay";
+import { NextResponse } from "next/server";
 
-const DEFAULT_USER_ID = "default-user";
+const VINTED_API_URL = process.env.VINTED_API_URL;
 
 export async function POST(request, { params }) {
+  const { id: conversationId } = await params;
+
   try {
-    const { id: messageId } = await params;
-    const { text } = await request.json();
+    const body = await request.json();
+    const { accountId, text, photo_ids, offer_price } = body;
 
-    // 1. We need to find which account this message belongs to.
-    const ebayAccounts = await db
-      .select()
+    if (!accountId) {
+      return NextResponse.json({ error: "accountId manquant" }, { status: 400 });
+    }
+
+    const [account] = await db
+      .select({
+        platformUserId: connectedAccounts.platformUserId,
+        accessToken: vintedSessions.accessToken,
+        refreshToken: vintedSessions.refreshToken,
+        csrfToken: vintedSessions.csrfToken,
+        cookieHeader: vintedSessions.cookieHeader,
+        userAgent: vintedSessions.userAgent,
+        anonId: vintedSessions.anonId,
+        domain: vintedSessions.domain,
+        warmedUp: vintedSessions.warmedUp,
+        warmedAt: vintedSessions.warmedAt,
+      })
       .from(connectedAccounts)
-      .where(eq(connectedAccounts.userId, DEFAULT_USER_ID))
-      .then(rows => rows.filter(r => r.platform === "ebay"));
+      .innerJoin(vintedSessions, eq(vintedSessions.connectedAccountId, connectedAccounts.id))
+      .where(eq(connectedAccounts.id, accountId))
+      .limit(1);
 
-    if (ebayAccounts.length === 0) {
-      return NextResponse.json({ error: "Aucun compte eBay connecté" }, { status: 404 });
+    if (!account) {
+      return NextResponse.json({ error: "Compte introuvable" }, { status: 404 });
     }
 
-    const account = ebayAccounts[0]; 
-
-    // MOCK: If it's a mock message, just return success
-    if (messageId.startsWith('mock-')) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return NextResponse.json({ success: true });
-    }
-
-    const accessToken = await getValidEbayToken(account.id);
-
-    const body = {
-      body: text
+    const sessionData = {
+      domain: account.domain,
+      access_token: account.accessToken,
+      refresh_token: account.refreshToken,
+      user_id: account.platformUserId,
+      warmed_at: account.warmedAt || null,
+      warmed_up: account.warmedUp || false,
+      anon_id: account.anonId || "",
+      csrf_token: account.csrfToken || "",
+      user_agent: account.userAgent || "",
+      cookie_header: account.cookieHeader || "",
     };
 
-    const res = await fetch(`https://apiz.sandbox.ebay.com/sell/messaging/v1/member_message/${messageId}/reply`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (res.ok) {
-       return NextResponse.json({ success: true });
-    } else {
-        const errorText = await res.text();
-        console.error("eBay reply error:", errorText);
-        return NextResponse.json({ error: errorText }, { status: 400 });
+    // Offre de prix
+    if (offer_price !== undefined) {
+      const res = await fetch(
+        `${VINTED_API_URL}/api/send-offer?conversation_id=${conversationId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...sessionData, offer_price }),
+          signal: AbortSignal.timeout(10000),
+        }
+      );
+      if (!res.ok) throw new Error(`API error ${res.status}`);
+      return NextResponse.json(await res.json());
     }
 
+    // Message texte (+ photos optionnelles)
+    const res = await fetch(
+      `${VINTED_API_URL}/api/send-message?conversation_id=${conversationId}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...sessionData,
+          body: text || "",
+          photo_ids: photo_ids || [],
+        }),
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    return NextResponse.json(await res.json());
   } catch (error) {
-    console.error("Failed to send message:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Send message error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

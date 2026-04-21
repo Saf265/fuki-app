@@ -9,7 +9,7 @@ const VINTED_API_URL = process.env.VINTED_API_URL;
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const page = searchParams.get("page") || "1";
-  const per_page = searchParams.get("per_page") || "20";
+  const per_page = searchParams.get("per_page") || "10";
 
   try {
     // Récupère tous les comptes Vinted de l'user avec leur session
@@ -68,6 +68,7 @@ export async function GET(request) {
           conversations: (data.conversations ?? data ?? []).filter(
             (c) => c.opposite_user_name?.toLowerCase() !== "vinted"
           ),
+          hasMore: (data.conversations ?? data ?? []).length === Number(per_page),
         };
       })
     );
