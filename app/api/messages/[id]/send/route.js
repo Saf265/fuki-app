@@ -10,7 +10,7 @@ export async function POST(request, { params }) {
 
   try {
     const body = await request.json();
-    const { accountId, text, photo_ids, offer_price } = body;
+    const { accountId, text, photo_url, offer_price } = body;
 
     if (!accountId) {
       return NextResponse.json({ error: "accountId manquant" }, { status: 400 });
@@ -53,6 +53,7 @@ export async function POST(request, { params }) {
 
     // Offre de prix
     if (offer_price !== undefined) {
+      console.log("💰 Envoi d'une offre:", offer_price);
       const res = await fetch(
         `${VINTED_API_URL}/api/send-offer?conversation_id=${conversationId}`,
         {
@@ -63,27 +64,47 @@ export async function POST(request, { params }) {
         }
       );
       if (!res.ok) throw new Error(`API error ${res.status}`);
-      return NextResponse.json(await res.json());
+      const data = await res.json();
+      console.log("✅ Offre envoyée");
+      return NextResponse.json(data);
     }
 
-    // Message texte (+ photos optionnelles)
+    // Message texte (+ photo optionnelle)
+    const message = text?.trim() || "";
+    const photoUrl = photo_url?.trim() || "";
+
+    console.log("💬 Envoi d'un message:", { message, photoUrl });
+
+    const params = new URLSearchParams({
+      conversation_id: conversationId,
+      message: message,
+      photo_url: photoUrl,
+    });
+
     const res = await fetch(
-      `${VINTED_API_URL}/api/send-message?conversation_id=${conversationId}`,
+      `${VINTED_API_URL}/api/reply-to-conversation?${params}`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...sessionData,
-          body: text || "",
-          photo_ids: photo_ids || [],
-        }),
+        headers: {
+          "accept": "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(sessionData),
         signal: AbortSignal.timeout(10000),
       }
     );
-    if (!res.ok) throw new Error(`API error ${res.status}`);
-    return NextResponse.json(await res.json());
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("❌ Erreur API:", res.status, errorText);
+      throw new Error(`API error ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log("✅ Message envoyé");
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Send message error:", error);
+    console.error("❌ Send message error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

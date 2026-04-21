@@ -454,39 +454,90 @@ function MessageInput({ conversationId, accountId, allowReply, userSide, transac
   const [text, setText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
-  // Bouton offre visible dès qu'il y a une transaction non fermée
   const canOffer = transaction != null && !transaction?.item_is_closed;
-
-  // Prix de référence pour pré-remplir la modale
   const referencePrice = transaction?.offer_price?.amount
     ? parseFloat(transaction.offer_price.amount)
     : null;
 
-  const sendText = async () => {
-    if (!text.trim()) return;
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+  };
+
+  const sendMessage = async () => {
+    if (!text.trim() && !selectedImage) return;
     setIsSending(true);
     try {
+      let imageUrl = "";
+
+      // Upload image first if selected
+      if (selectedImage) {
+        console.log("🚀 Envoi de l'image...");
+        const formData = new FormData();
+        formData.append("image", selectedImage);
+
+        const uploadRes = await fetch("/api/messages/upload-image", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadRes.ok) throw new Error("Échec de l'upload de l'image");
+        const uploadData = await uploadRes.json();
+        imageUrl = uploadData.url;
+        console.log("✅ Image uploadée:", imageUrl);
+      }
+
+      // Send message to Vinted API
+      console.log("📝 Envoi du message...");
       const res = await fetch(`/api/messages/${conversationId}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId, text: text.trim() }),
+        body: JSON.stringify({
+          accountId,
+          text: text.trim() || "",
+          photo_url: imageUrl,
+        }),
       });
-      if (!res.ok) throw new Error();
+
+      if (!res.ok) throw new Error("Échec de l'envoi du message");
+      console.log("✅ Message envoyé");
+
+      // Optimistic update
       onSent({
         id: Date.now(),
         entity_type: "message",
-        entity: { body: text.trim(), user_id: transaction?.current_user_side === "seller" ? transaction?.seller_id : transaction?.buyer_id },
+        entity: {
+          body: text.trim(),
+          user_id: userSide === "seller" ? transaction?.seller_id : transaction?.buyer_id,
+          photo: imageUrl ? { url: imageUrl } : null,
+        },
         created_at_ts: new Date().toISOString(),
       });
       setText("");
-    } catch { /* silent */ } finally {
+      removeImage();
+    } catch (err) {
+      console.error("❌ Erreur:", err);
+    } finally {
       setIsSending(false);
     }
   };
 
   const handleKey = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendText(); }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
   if (!allowReply) {
@@ -499,12 +550,34 @@ function MessageInput({ conversationId, accountId, allowReply, userSide, transac
 
   return (
     <>
-      <div className="px-5 py-4 border-t border-border shrink-0">
+      <div className="px-5 py-4 border-t border-border shrink-0 space-y-3">
+        {/* Image preview */}
+        {imagePreview && (
+          <div className="relative inline-block">
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="w-20 h-20 object-cover rounded-lg border border-border"
+            />
+            <button
+              onClick={removeImage}
+              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        )}
+
         <div className="flex items-end gap-2">
           <div className="flex gap-1 shrink-0 pb-0.5">
             <label className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer" title="Envoyer une image">
               <Image size={16} />
-              <input type="file" accept="image/*" className="hidden" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
             </label>
             {canOffer && (
               <button
@@ -528,8 +601,8 @@ function MessageInput({ conversationId, accountId, allowReply, userSide, transac
           />
 
           <button
-            onClick={sendText}
-            disabled={isSending || !text.trim()}
+            onClick={sendMessage}
+            disabled={isSending || (!text.trim() && !selectedImage)}
             className="p-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-40 shrink-0"
           >
             {isSending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
