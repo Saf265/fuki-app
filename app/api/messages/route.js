@@ -1,96 +1,91 @@
-import { NextResponse } from "next/server";
 import { db } from "@/src/db/drizzle/index";
-import { connectedAccounts } from "@/src/db/drizzle/schema";
+import { connectedAccounts, vintedSessions } from "@/src/db/drizzle/schema";
 import { eq } from "drizzle-orm";
-import { getValidEbayToken } from "@/src/lib/ebay";
+import { NextResponse } from "next/server";
 
 const DEFAULT_USER_ID = "default-user";
+const VINTED_API_URL = process.env.VINTED_API_URL;
 
 export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const page = searchParams.get("page") || "1";
+  const per_page = searchParams.get("per_page") || "20";
+
   try {
-    // Fetch all connected eBay accounts for default user
-    const ebayAccounts = await db
-      .select()
+    // Récupère tous les comptes Vinted de l'user avec leur session
+    const accounts = await db
+      .select({
+        accountId: connectedAccounts.id,
+        username: connectedAccounts.username,
+        platformUserId: connectedAccounts.platformUserId,
+        accessToken: vintedSessions.accessToken,
+        refreshToken: vintedSessions.refreshToken,
+        csrfToken: vintedSessions.csrfToken,
+        cookieHeader: vintedSessions.cookieHeader,
+        userAgent: vintedSessions.userAgent,
+        anonId: vintedSessions.anonId,
+        domain: vintedSessions.domain,
+        warmedUp: vintedSessions.warmedUp,
+        warmedAt: vintedSessions.warmedAt,
+      })
       .from(connectedAccounts)
-      .where(eq(connectedAccounts.userId, DEFAULT_USER_ID))
-      .then(rows => rows.filter(r => r.platform === "ebay"));
+      .innerJoin(vintedSessions, eq(vintedSessions.connectedAccountId, connectedAccounts.id))
+      .where(eq(connectedAccounts.userId, DEFAULT_USER_ID));
 
-    let allConversations = [];
-
-    // Aggregate messages from each eBay account
-    for (const account of ebayAccounts) {
-      try {
-        const accessToken = await getValidEbayToken(account.id);
-        
-        const msgsRes = await fetch(
-          "https://apiz.sandbox.ebay.com/sell/messaging/v1/member_message?limit=20",
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        );
-
-        if (msgsRes.ok) {
-          const data = await msgsRes.json();
-          const mapped = (data.memberMessages || []).map(m => ({
-            id: m.messageId,
-            platform: "ebay",
-            accountName: account.firstName || account.email || "Compte eBay",
-            name: m.fromDisplayValue || "Anonyme",
-            lastMessage: m.subject || "Sans sujet",
-            lastTime: new Date(m.creationDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-            avatar: null,
-            messages: [
-              {
-                id: m.messageId,
-                text: m.body || m.subject,
-                sender: 'them',
-                time: new Date(m.creationDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-                status: 'sent'
-              }
-            ]
-          }));
-          allConversations = [...allConversations, ...mapped];
-        }
-      } catch (err) {
-        console.warn(`Error fetching eBay messages for ${account.id}:`, err.message);
-      }
+    if (accounts.length === 0) {
+      return NextResponse.json({ conversations: [], accounts: [] });
     }
 
-    // Mock some data if none exist (for UI demo)
-    if (allConversations.length === 0) {
-       allConversations = [
-        {
-          id: 'mock-1',
-          platform: 'vinted',
-          accountName: 'Sarah Vntd',
-          name: 'Lucas Dupont',
-          lastMessage: 'Est-ce que l\'article est encore disponible ?',
-          lastTime: '10:45',
-          avatar: null,
-          messages: [
-            { id: 1, text: 'Bonjour !', sender: 'them', time: '10:40' },
-            { id: 2, text: 'Est-ce que l\'article est encore disponible ?', sender: 'them', time: '10:45' }
-          ]
-        },
-        {
-            id: 'mock-2',
-            platform: 'ebay',
-            accountName: 'Pro Seller',
-            name: 'Jean-Pierre',
-            lastMessage: 'Veuillez m\'envoyer une offre pour cet objet.',
-            lastTime: 'Hier',
-            avatar: null,
-            messages: [
-              { id: 1, text: 'Bonjour, je suis intéressé.', sender: 'them', time: 'Hier' },
-              { id: 2, text: 'Veuillez m\'envoyer une offre pour cet objet.', sender: 'them', time: 'Hier' }
-            ]
-          }
-      ];
-    }
+    // Fetch conversations pour tous les comptes en parallèle
+    const results = await Promise.allSettled(
+      accounts.map(async (account) => {
+        const params = new URLSearchParams({ page, per_page });
 
-    return NextResponse.json({ conversations: allConversations });
+        const res = await fetch(`${VINTED_API_URL}/api/get-conversations?${params}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            domain: account.domain,
+            access_token: account.accessToken,
+            refresh_token: account.refreshToken,
+            user_id: account.platformUserId,
+            warmed_at: account.warmedAt || null,
+            warmed_up: account.warmedUp || false,
+            anon_id: account.anonId || "",
+            csrf_token: account.csrfToken || "",
+            user_agent: account.userAgent || "",
+            cookie_header: account.cookieHeader || "",
+          }),
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (!res.ok) throw new Error(`API error ${res.status}`);
+        const data = await res.json();
+
+        return {
+          accountId: account.accountId,
+          username: account.username,
+          conversations: (data.conversations ?? data ?? []).filter(
+            (c) => c.opposite_user_name?.toLowerCase() !== "vinted"
+          ),
+        };
+      })
+    );
+
+    const accounts_with_convs = results
+      .filter((r) => r.status === "fulfilled")
+      .map((r) => r.value);
+
+    const errors = results
+      .filter((r) => r.status === "rejected")
+      .map((r) => r.reason?.message);
+
+    return NextResponse.json({
+      accounts: accounts_with_convs,
+      errors: errors.length ? errors : undefined,
+    });
   } catch (error) {
-    console.error("Failed to fetch messages:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Messages fetch error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
