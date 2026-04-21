@@ -218,15 +218,17 @@ export default function Connections() {
             </div>
 
             {/* Body */}
-            <div className="px-6 py-6">
+            <div className="px-7 py-7">
               {isPolling ? (
-                <div className="flex flex-col items-center text-center py-4 gap-5">
-                  <div className="w-12 h-12 rounded-full border-2 border-primary/20 flex items-center justify-center">
-                    <Loader2 size={22} className="text-primary animate-spin" />
+                <div className="flex flex-col items-center text-center py-6 gap-6">
+                  <div className="w-14 h-14 rounded-full border-2 border-primary/20 flex items-center justify-center">
+                    <Loader2 size={26} className="text-primary animate-spin" />
                   </div>
                   <div>
-                    <p className="font-semibold text-sm">En attente de connexion</p>
-                    <p className="text-xs text-muted-foreground mt-1">Connectez-vous sur Vinted dans l'onglet ouvert, puis revenez ici.</p>
+                    <p className="font-semibold">En attente de connexion</p>
+                    <p className="text-sm text-muted-foreground mt-1.5 max-w-xs">
+                      Connectez-vous sur Vinted dans l'onglet ouvert, puis revenez ici. Fuki détectera la connexion automatiquement.
+                    </p>
                   </div>
                   <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
                     <div
@@ -236,30 +238,30 @@ export default function Connections() {
                   </div>
                   <button
                     onClick={() => { setIsPolling(false); setIsModalOpen(false); }}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Annuler
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3">
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col gap-4">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {currentPlatform === "vinted"
-                      ? "Cliquez sur le bouton ci-dessous. Vinted s'ouvrira dans un nouvel onglet — connectez-vous et l'extension Fuki fera le reste."
-                      : "Vous allez être redirigé vers eBay pour autoriser l'accès à votre compte."}
+                      ? "Vinted va s'ouvrir dans un nouvel onglet. Connectez-vous à votre compte et l'extension Fuki synchronisera tout automatiquement."
+                      : "Vous allez être redirigé vers eBay pour connecter votre boutique en toute sécurité."}
                   </p>
 
                   {currentPlatform === "vinted" ? (
                     <button
                       onClick={handleVintedConnect}
                       disabled={isConnecting}
-                      className="mt-2 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold text-sm py-2.5 rounded-lg transition-colors disabled:opacity-60"
+                      className="mt-1 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-60"
                     >
                       {isConnecting ? (
-                        <Loader2 size={16} className="animate-spin" />
+                        <Loader2 size={17} className="animate-spin" />
                       ) : (
                         <>
-                          <ExternalLink size={15} />
+                          <ExternalLink size={16} />
                           Ouvrir Vinted
                         </>
                       )}
@@ -268,13 +270,13 @@ export default function Connections() {
                     <button
                       onClick={handleEbayConnect}
                       disabled={isConnecting}
-                      className="mt-2 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold text-sm py-2.5 rounded-lg transition-colors disabled:opacity-60"
+                      className="mt-1 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-60"
                     >
-                      {isConnecting ? <Loader2 size={16} className="animate-spin" /> : "Continuer sur eBay"}
+                      {isConnecting ? <Loader2 size={17} className="animate-spin" /> : "Connecter mon compte eBay"}
                     </button>
                   )}
 
-                  <button onClick={closeModal} className="text-xs text-center text-muted-foreground hover:text-foreground transition-colors py-1">
+                  <button onClick={closeModal} className="text-sm text-center text-muted-foreground hover:text-foreground transition-colors py-1">
                     Annuler
                   </button>
                 </div>
@@ -287,27 +289,30 @@ export default function Connections() {
       {/* Delete modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-200">
-          <div className="bg-card border border-border w-full max-w-xs rounded-xl overflow-hidden">
-            <div className="px-6 py-5 border-b border-border flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
-                <AlertTriangle size={15} className="text-red-500" />
+          <div className="bg-card border border-border w-full max-w-sm rounded-xl overflow-hidden">
+            <div className="px-7 py-6 border-b border-border flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+                <AlertTriangle size={18} className="text-red-500" />
               </div>
-              <p className="text-sm font-semibold">Déconnecter le compte ?</p>
+              <div>
+                <p className="font-semibold">Déconnecter le compte ?</p>
+                <p className="text-sm text-muted-foreground">Cette action est irréversible</p>
+              </div>
             </div>
-            <div className="px-6 py-5">
-              <p className="text-sm text-muted-foreground mb-5">
-                Le compte <span className="font-medium text-foreground">{accountToDelete?.platform}</span> sera supprimé définitivement.
+            <div className="px-7 py-6">
+              <p className="text-sm text-muted-foreground mb-6">
+                Le compte <span className="font-medium text-foreground capitalize">{accountToDelete?.platform}</span> sera retiré de Fuki. Vous pourrez le reconnecter à tout moment.
               </p>
               <div className="flex flex-col gap-2">
                 <button
                   onClick={confirmDelete}
-                  className="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm rounded-lg transition-colors"
+                  className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
                 >
-                  Confirmer
+                  Déconnecter
                 </button>
                 <button
                   onClick={() => setIsDeleteModalOpen(false)}
-                  className="w-full py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="w-full py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Annuler
                 </button>

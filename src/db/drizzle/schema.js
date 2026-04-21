@@ -105,33 +105,16 @@ export const connectedAccounts = pgTable(
   "connected_accounts",
   {
     id: text("id").primaryKey(),
-
-    // FK to the Fuki user
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-
-    // "vinted" | "ebay"
-    platform: text("platform").notNull(),
-
-    // Identity info returned by the platform
-    firstName: text("first_name"),
-    lastName: text("last_name"),
-    platformUserId: text("platform_user_id"), // seller ID / username
-    gaClientId: text("ga_client_id"),
-
-    // OAuth tokens
-    accessToken: text("access_token"),
-    refreshToken: text("refresh_token"),
-    accessTokenExpiresAt: timestamp("access_token_expires_at"),
-
-    domain: text("domain"),
-    userAgent: text("user_agent"),
-
+    platform: text("platform").notNull(), // "vinted" | "ebay"
+    username: text("username"),
+    platformUserId: text("platform_user_id"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => [
@@ -140,6 +123,67 @@ export const connectedAccounts = pgTable(
   ],
 );
 
+// ─── Vinted session data ──────────────────────────────────────────────────────
+
+export const vintedSessions = pgTable(
+  "vinted_sessions",
+  {
+    id: text("id").primaryKey(),
+    connectedAccountId: text("connected_account_id")
+      .notNull()
+      .unique()
+      .references(() => connectedAccounts.id, { onDelete: "cascade" }),
+
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    csrfToken: text("csrf_token"),
+    cookieHeader: text("cookie_header"),
+    userAgent: text("user_agent"),
+    anonId: text("anon_id"),
+    gaClientId: text("ga_client_id"),
+    domain: text("domain"),
+
+    warmedUp: boolean("warmed_up").default(false).notNull(),
+    warmedAt: timestamp("warmed_at"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("vs_connectedAccountId_idx").on(table.connectedAccountId)],
+);
+
+// ─── eBay session data ────────────────────────────────────────────────────────
+
+export const ebaySessions = pgTable(
+  "ebay_sessions",
+  {
+    id: text("id").primaryKey(),
+    connectedAccountId: text("connected_account_id")
+      .notNull()
+      .unique()
+      .references(() => connectedAccounts.id, { onDelete: "cascade" }),
+
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at"),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+    userAgent: text("user_agent"),
+    scope: text("scope"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("es_connectedAccountId_idx").on(table.connectedAccountId)],
+);
+
+// ─── Relations ────────────────────────────────────────────────────────────────
+
 export const connectedAccountRelations = relations(
   connectedAccounts,
   ({ one }) => ({
@@ -147,8 +191,30 @@ export const connectedAccountRelations = relations(
       fields: [connectedAccounts.userId],
       references: [users.id],
     }),
+    vintedSession: one(vintedSessions, {
+      fields: [connectedAccounts.id],
+      references: [vintedSessions.connectedAccountId],
+    }),
+    ebaySession: one(ebaySessions, {
+      fields: [connectedAccounts.id],
+      references: [ebaySessions.connectedAccountId],
+    }),
   }),
 );
+
+export const vintedSessionRelations = relations(vintedSessions, ({ one }) => ({
+  connectedAccount: one(connectedAccounts, {
+    fields: [vintedSessions.connectedAccountId],
+    references: [connectedAccounts.id],
+  }),
+}));
+
+export const ebaySessionRelations = relations(ebaySessions, ({ one }) => ({
+  connectedAccount: one(connectedAccounts, {
+    fields: [ebaySessions.connectedAccountId],
+    references: [connectedAccounts.id],
+  }),
+}));
 
 export const userRelations = relations(users, ({ many }) => ({
   connectedAccounts: many(connectedAccounts),

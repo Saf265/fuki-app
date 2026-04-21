@@ -18,17 +18,24 @@ CREATE TABLE "connected_accounts" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"platform" text NOT NULL,
-	"first_name" text,
-	"last_name" text,
+	"username" text,
 	"platform_user_id" text,
-	"ga_client_id" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "ebay_sessions" (
+	"id" text PRIMARY KEY NOT NULL,
+	"connected_account_id" text NOT NULL,
 	"access_token" text,
 	"refresh_token" text,
 	"access_token_expires_at" timestamp,
-	"domain" text,
+	"refresh_token_expires_at" timestamp,
 	"user_agent" text,
+	"scope" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "ebay_sessions_connected_account_id_unique" UNIQUE("connected_account_id")
 );
 --> statement-breakpoint
 CREATE TABLE "pending_syncs" (
@@ -73,12 +80,34 @@ CREATE TABLE "verification" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "vinted_sessions" (
+	"id" text PRIMARY KEY NOT NULL,
+	"connected_account_id" text NOT NULL,
+	"access_token" text,
+	"refresh_token" text,
+	"csrf_token" text,
+	"cookie_header" text,
+	"user_agent" text,
+	"anon_id" text,
+	"ga_client_id" text,
+	"domain" text,
+	"warmed_up" boolean DEFAULT false NOT NULL,
+	"warmed_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "vinted_sessions_connected_account_id_unique" UNIQUE("connected_account_id")
+);
+--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "connected_accounts" ADD CONSTRAINT "connected_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "ebay_sessions" ADD CONSTRAINT "ebay_sessions_connected_account_id_connected_accounts_id_fk" FOREIGN KEY ("connected_account_id") REFERENCES "public"."connected_accounts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pending_syncs" ADD CONSTRAINT "pending_syncs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "vinted_sessions" ADD CONSTRAINT "vinted_sessions_connected_account_id_connected_accounts_id_fk" FOREIGN KEY ("connected_account_id") REFERENCES "public"."connected_accounts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "ca_userId_idx" ON "connected_accounts" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "ca_platform_idx" ON "connected_accounts" USING btree ("platform");--> statement-breakpoint
+CREATE INDEX "es_connectedAccountId_idx" ON "ebay_sessions" USING btree ("connected_account_id");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");
+CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");--> statement-breakpoint
+CREATE INDEX "vs_connectedAccountId_idx" ON "vinted_sessions" USING btree ("connected_account_id");
