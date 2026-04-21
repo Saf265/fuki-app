@@ -23,6 +23,8 @@ export default function Messages() {
   // données paginées par accountId : { [accountId]: { [page]: conv[] } }
   const [pageCache, setPageCache] = useState({});
   const [hasMorePages, setHasMorePages] = useState({});
+  // Cache des messages par conversation : { [conv_id]: conversationData }
+  const [messagesCache, setMessagesCache] = useState({});
 
   const fetchPage = useCallback(async (page) => {
     try {
@@ -69,6 +71,7 @@ export default function Messages() {
     setIsRefreshing(true);
     setPageCache({});
     setCurrentPages({});
+    setMessagesCache({});
     setSelectedConv(null);
     await fetchPage(1);
     setIsRefreshing(false);
@@ -201,7 +204,12 @@ export default function Messages() {
           {/* Right — détail */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {selectedConv ? (
-              <ConversationDetail conv={selectedConv} accountId={selectedAccount} />
+              <ConversationDetail
+                conv={selectedConv}
+                accountId={selectedAccount}
+                messagesCache={messagesCache}
+                setMessagesCache={setMessagesCache}
+              />
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center">
                 <div className="w-12 h-12 rounded-2xl bg-card border border-border flex items-center justify-center">
@@ -256,22 +264,33 @@ function ConversationRow({ conv, isSelected, onClick }) {
 
 // ─── Conversation detail ──────────────────────────────────────────────────────
 
-function ConversationDetail({ conv, accountId }) {
-  const [data, setData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+function ConversationDetail({ conv, accountId, messagesCache, setMessagesCache }) {
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
 
+  const cacheKey = `${accountId}_${conv.conv_id}`;
+  const data = messagesCache[cacheKey] || null;
+
   useEffect(() => {
+    // Si déjà en cache, pas besoin de fetch
+    if (messagesCache[cacheKey]) {
+      console.log("⚡ Messages chargés depuis le cache");
+      return;
+    }
+
+    console.log("🔄 Chargement des messages...");
     setIsLoading(true);
     setError(null);
-    setData(null);
     fetch(`/api/messages/${conv.conv_id}?accountId=${accountId}`)
       .then((r) => r.ok ? r.json() : Promise.reject("Erreur serveur"))
-      .then((d) => setData(d.conversation))
+      .then((d) => {
+        setMessagesCache((prev) => ({ ...prev, [cacheKey]: d.conversation }));
+        console.log("✅ Messages chargés");
+      })
       .catch((e) => setError(String(e)))
       .finally(() => setIsLoading(false));
-  }, [conv.conv_id, accountId]);
+  }, [conv.conv_id, accountId, cacheKey, messagesCache, setMessagesCache]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -340,7 +359,19 @@ function ConversationDetail({ conv, accountId }) {
           allowReply={allowReply}
           userSide={userSide}
           transaction={conversation?.transaction}
-          onSent={(newMsg) => setData((d) => d ? { ...d, messages: [...d.messages, newMsg] } : d)}
+          onSent={(newMsg) => {
+            setMessagesCache((prev) => {
+              const current = prev[cacheKey];
+              if (!current) return prev;
+              return {
+                ...prev,
+                [cacheKey]: {
+                  ...current,
+                  messages: [...current.messages, newMsg],
+                },
+              };
+            });
+          }}
         />
       )}
     </div>
