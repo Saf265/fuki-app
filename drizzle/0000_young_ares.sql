@@ -21,7 +21,8 @@ CREATE TABLE "connected_accounts" (
 	"username" text,
 	"platform_user_id" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "connected_accounts_platform_user_id_unique" UNIQUE("platform_user_id")
 );
 --> statement-breakpoint
 CREATE TABLE "ebay_sessions" (

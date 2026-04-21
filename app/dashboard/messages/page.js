@@ -695,9 +695,17 @@ function OfferModal({ conversationId, accountId, userSide, transaction, referenc
       const res = await fetch(`/api/messages/${conversationId}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId, offer_price: priceVal }),
+        body: JSON.stringify({
+          accountId,
+          offer_price: priceVal,
+          transaction_id: transaction?.id,
+          is_seller: userSide === "seller",
+        }),
       });
       if (!res.ok) throw new Error("Erreur lors de l'envoi");
+      const data = await res.json();
+      console.log("✅ Offre envoyée, offer_id:", data.offer_id || "N/A");
+
       onSent({
         id: Date.now(),
         entity_type: "offer_message",

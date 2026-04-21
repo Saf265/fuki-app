@@ -1,5 +1,5 @@
 {
-  "id": "df069abf-7dad-4f0b-b3da-7926d25d2374",
+  "id": "43bdbb37-f948-4aa2-bc23-bfd6996b36d7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -223,7 +223,15 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "connected_accounts_platform_user_id_unique": {
+          "name": "connected_accounts_platform_user_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "platform_user_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

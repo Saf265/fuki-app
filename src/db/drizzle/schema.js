@@ -110,7 +110,7 @@ export const connectedAccounts = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     platform: text("platform").notNull(), // "vinted" | "ebay"
     username: text("username"),
-    platformUserId: text("platform_user_id"),
+    platformUserId: text("platform_user_id").unique(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

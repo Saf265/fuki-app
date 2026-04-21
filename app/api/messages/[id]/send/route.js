@@ -53,19 +53,80 @@ export async function POST(request, { params }) {
 
     // Offre de prix
     if (offer_price !== undefined) {
-      console.log("💰 Envoi d'une offre:", offer_price);
-      const res = await fetch(
-        `${VINTED_API_URL}/api/send-offer?conversation_id=${conversationId}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...sessionData, offer_price }),
-          signal: AbortSignal.timeout(10000),
-        }
-      );
-      if (!res.ok) throw new Error(`API error ${res.status}`);
-      const data = await res.json();
-      console.log("✅ Offre envoyée");
+      const transactionId = body.transaction_id;
+      const isSeller = body.is_seller;
+
+      if (!transactionId) {
+        return NextResponse.json({ error: "transaction_id manquant" }, { status: 400 });
+      }
+
+      console.log("💰 Envoi d'une offre:", {
+        transaction_id: transactionId,
+        conversation_id: conversationId,
+        price: offer_price,
+        is_seller: isSeller,
+      });
+
+      const params = new URLSearchParams({
+        transaction_id: transactionId,
+        conversation_id: conversationId,
+        price: offer_price.toString(),
+        is_seller: isSeller ? "true" : "false",
+      });
+
+      const url = `${VINTED_API_URL}/send_offer?${params}`;
+      console.log("🔗 URL:", url);
+      console.log("📦 Body:", JSON.stringify(sessionData, null, 2));
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(sessionData),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      console.log("📡 Status:", res.status, res.statusText);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("❌ Erreur API offre:", {
+          status: res.status,
+          statusText: res.statusText,
+          body: errorText,
+          url: url
+        });
+        throw new Error(`API error ${res.status}: ${errorText}`);
+      }
+
+      const responseText = await res.text();
+      console.log("✅ Réponse brute API offre:", responseText);
+
+      let data = null;
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (e) {
+        console.error("❌ Erreur parsing JSON:", e);
+      }
+
+      // Si l'API retourne null ou vide, on considère que c'est un succès
+      if (!data || data === null) {
+        console.log("✅ Offre envoyée (réponse vide/null)");
+        return NextResponse.json({
+          success: true,
+          message: "Offre envoyée",
+          transaction_id: transactionId,
+          price: offer_price
+        });
+      }
+
+      // L'API peut retourner { conversation: {...}, code: 0 } ou directement les données
+      const responseData = data?.conversation || data;
+      const offerId = responseData?.transaction?.offer_id || responseData?.offer_id || "N/A";
+
+      console.log("✅ Offre envoyée, offer_id:", offerId);
       return NextResponse.json(data);
     }
 
