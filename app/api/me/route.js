@@ -1,7 +1,18 @@
-import { db } from "@/db/drizzle";
-import { pendingSyncs, users } from "@/db/drizzle/schema";
+import { db } from "@/src/db/drizzle/index";
+import { pendingSyncs, users } from "@/src/db/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*", // Allow any origin for the extension to work easily
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Private-Network": "true",
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
 
 export async function POST(request) {
   try {
@@ -10,7 +21,7 @@ export async function POST(request) {
     if (!token) {
       return NextResponse.json(
         { error: true, message: "Token manquant" },
-        { status: 400 },
+        { status: 400, headers: corsHeaders },
       );
     }
 
@@ -23,7 +34,7 @@ export async function POST(request) {
     if (!syncData) {
       return NextResponse.json(
         { error: true, message: "Token invalide ou expiré" },
-        { status: 401 },
+        { status: 401, headers: corsHeaders },
       );
     }
 
@@ -36,7 +47,7 @@ export async function POST(request) {
     if (!user) {
       return NextResponse.json(
         { error: true, message: "Utilisateur non trouvé" },
-        { status: 404 },
+        { status: 404, headers: corsHeaders },
       );
     }
 
@@ -44,15 +55,15 @@ export async function POST(request) {
       success: true,
       user: {
         name: user.name,
-        userId: user.id, // On s'assure que c'est bien userId ici pour le content.js
+        userId: user.id,
         domain: syncData.domain,
       },
-    });
+    }, { headers: corsHeaders });
   } catch (error) {
     console.error(error);
     return NextResponse.json(
       { error: true, message: "Erreur serveur" },
-      { status: 500 },
+      { status: 500, headers: corsHeaders },
     );
   }
 }

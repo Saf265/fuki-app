@@ -1,7 +1,6 @@
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
-import ExtensionSync from "@/components/ExtensionSync";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,7 +18,6 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col font-sans">
         {children}
         <Toaster richColors position="bottom-right" />
-        <ExtensionSync />
       </body>
     </html>
   );

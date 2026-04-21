@@ -1,79 +1,70 @@
-import { db } from "@/db/drizzle";
-import { connectedAccounts } from "@/db/drizzle/schema";
+import { db } from "@/src/db/drizzle/index";
+import { connectedAccounts } from "@/src/db/drizzle/schema";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 
+const DEFAULT_USER_ID = "default-user";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Private-Network": "true",
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(req) {
-  const {
-    vintedUsername,
-    access_token,
-    refresh_token,
-    userId,
-    gaClientId,
-    domain,
-  } = await req.json();
-
-  if (
-    !vintedUsername ||
-    !access_token ||
-    !refresh_token ||
-    !userId ||
-    !domain
-  ) {
-    return NextResponse.json({ success: false, error: "Missing credentials" });
-  }
-  console.log("DATA----------------");
-  console.log({ vintedUsername, access_token, refresh_token, userId, domain });
-
-  const randomId = nanoid();
-
-  const resp = await fetch(
-    "https://stingray-app-xoed8.ondigitalocean.app/api/link",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        access_token: access_token,
-        domain: domain,
-      }),
-    },
-  );
-  console.log(resp);
-  if (!resp.ok) {
-    return NextResponse.json({
-      success: false,
-      error: "Failed to link account",
-    });
-  }
-  const data = await resp.json();
-  console.log(data.user);
-  console.log(data);
   try {
+    const {
+      vintedUsername,
+      access_token,
+      refresh_token,
+      userId,
+      gaClientId,
+      domain,
+      vintedUserId,
+      userAgent,
+    } = await req.json();
+
+    if (!vintedUsername || !access_token || !refresh_token || !domain) {
+      return NextResponse.json(
+        { success: false, error: "Missing credentials" },
+        { headers: corsHeaders },
+      );
+    }
+
     await db.insert(connectedAccounts).values({
-      id: randomId,
+      id: nanoid(),
       userId: userId,
       platform: "vinted",
       firstName: vintedUsername,
       lastName: null,
-      platformUserId: data.user.id, // ça
+      platformUserId: vintedUserId,
       accessToken: access_token,
       refreshToken: refresh_token,
       gaClientId: gaClientId,
-      accessTokenExpiresAt: null, // ça
+      accessTokenExpiresAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-
-      // add
+      userAgent: userAgent,
       domain: domain,
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Vinted account added successfully",
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Vinted account added successfully",
+      },
+      { headers: corsHeaders },
+    );
   } catch (error) {
-    return NextResponse.json({ success: false, error: error.message });
+    console.error("Vinted add error:", error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500, headers: corsHeaders },
+    );
   }
 }

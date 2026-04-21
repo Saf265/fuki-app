@@ -21,10 +21,12 @@ CREATE TABLE "connected_accounts" (
 	"first_name" text,
 	"last_name" text,
 	"platform_user_id" text,
+	"ga_client_id" text,
 	"access_token" text,
 	"refresh_token" text,
 	"access_token_expires_at" timestamp,
 	"domain" text,
+	"user_agent" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );

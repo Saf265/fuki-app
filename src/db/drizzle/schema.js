@@ -126,6 +126,7 @@ export const connectedAccounts = pgTable(
     accessTokenExpiresAt: timestamp("access_token_expires_at"),
 
     domain: text("domain"),
+    userAgent: text("user_agent"),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

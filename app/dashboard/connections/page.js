@@ -1,7 +1,9 @@
 "use client";
 
 import {
-  CheckCircle2,
+  AlertTriangle,
+  ExternalLink,
+  Link2,
   Loader2,
   Plus,
   ShoppingBag,
@@ -9,95 +11,48 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Sidebar } from "../page";
 
 export default function Connections() {
-  const router = useRouter();
-  const [accounts, setAccounts] = useState({
-    vinted: [],
-    ebay: [],
-  });
+  const [accounts, setAccounts] = useState({ vinted: [], ebay: [] });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPlatform, setCurrentPlatform] = useState(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const [pollCount, setPollCount] = useState(0);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAccounts = async () => {
-      try {
-        const res = await fetch("/api/connections");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.connections) {
-            setAccounts(data.connections);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch connections", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchAccounts();
-  }, []);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
 
   const openModal = (platform) => {
     setCurrentPlatform(platform);
     setIsModalOpen(true);
+    setIsConnecting(false);
+    setIsPolling(false);
+  };
+
+  const closeModal = () => {
+    if (isConnecting || isPolling) return;
+    setIsModalOpen(false);
   };
 
   const handleVintedConnect = async () => {
-    const newTab = window.open("about:blank", "_blank");
     setIsConnecting(true);
     try {
       const res = await fetch("/api/vinted/sync-token?domain=vinted.com");
-      if (!res.ok) {
-        newTab.close();
-        throw new Error("Failed to get sync token");
-      }
+      if (!res.ok) throw new Error("Token generation failed");
       const { token } = await res.json();
-
-      // Ouvrir Vinted dans l'onglet déjà créé
-      newTab.location.href = `https://www.vinted.com/?utm_id=${token}`;
-
-      // Commencer le polling pour détecter le nouveau compte
-      const initialCount = accounts.vinted.length;
-      const checkInterval = setInterval(async () => {
-        try {
-          const res = await fetch("/api/connections");
-          if (res.ok) {
-            const data = await res.json();
-            if (data.connections.vinted.length > initialCount) {
-              setAccounts(data.connections);
-              toast.success("Compte Vinted connecté avec succès !");
-              setIsConnecting(false);
-              setIsModalOpen(false);
-              clearInterval(checkInterval);
-            }
-          }
-        } catch (err) {
-          console.error("Polling error:", err);
-        }
-      }, 3000);
-
-      window._vintedPoll = checkInterval;
-    } catch (err) {
-      if (newTab && !newTab.closed) newTab.close();
-      toast.error("Erreur lors de la connexion.");
+      window.open(`https://www.vinted.com/?utm_id=${token}`, "_blank");
       setIsConnecting(false);
+      setIsPolling(true);
+      setPollCount(0);
+      toast.success("Vinted ouvert — connectez-vous puis revenez ici.");
+    } catch (err) {
+      setIsConnecting(false);
+      toast.error("Impossible de générer le token. Réessayez.");
     }
-  };
-
-  const cancelVintedConnect = () => {
-    if (window._vintedPoll) {
-      clearInterval(window._vintedPoll);
-      window._vintedPoll = null;
-    }
-    setIsConnecting(false);
-    toast.info("Connexion annulée.");
   };
 
   const handleEbayConnect = () => {
@@ -105,186 +60,259 @@ export default function Connections() {
     window.location.href = "/api/ebay/login";
   };
 
-  const removeAccount = (platform, id) => {
-    setAccounts((prev) => ({
-      ...prev,
-      [platform]: prev[platform].filter((a) => a.id !== id),
-    }));
+  const fetchAccounts = async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    try {
+      const res = await fetch("/api/connections");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.connections) {
+          setAccounts(data.connections);
+          return data.connections;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch connections", err);
+    } finally {
+      if (!silent) setIsLoading(false);
+    }
+    return null;
+  };
+
+  useEffect(() => { fetchAccounts(); }, []);
+
+  useEffect(() => {
+    let interval;
+    if (isPolling) {
+      const initialCount = accounts.vinted.length;
+      interval = setInterval(async () => {
+        setPollCount((prev) => prev + 1);
+        const newAccounts = await fetchAccounts(true);
+        if (newAccounts && newAccounts.vinted.length > initialCount) {
+          setIsPolling(false);
+          setIsModalOpen(false);
+          toast.success("Compte Vinted connecté !");
+          clearInterval(interval);
+        }
+        if (pollCount > 40) {
+          setIsPolling(false);
+          toast.error("Délai dépassé. Réessayez.");
+          clearInterval(interval);
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isPolling, accounts.vinted.length, pollCount]);
+
+  const removeAccount = (account) => {
+    setAccountToDelete(account);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!accountToDelete) return;
+    try {
+      const res = await fetch(`/api/connections?id=${accountToDelete.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setAccounts((prev) => ({
+          ...prev,
+          [accountToDelete.platform]: prev[accountToDelete.platform].filter((a) => a.id !== accountToDelete.id),
+        }));
+        toast.success("Compte déconnecté");
+      }
+    } catch {
+      toast.error("Erreur lors de la suppression");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setAccountToDelete(null);
+    }
   };
 
   const totalAccounts = accounts.vinted.length + accounts.ebay.length;
 
   return (
-    <div className="flex min-h-screen bg-gray-50 text-gray-900 font-sans">
-      {/* Sidebar */}
+    <div className="flex min-h-screen bg-background text-foreground font-sans">
       <Sidebar active="connections" />
 
-      {/* Main Content */}
       <main
-        className="flex-1 p-10 transition-[margin-left] duration-200 ease-in-out"
-        style={{ marginLeft: 'var(--sidebar-w, 16rem)' }}
+        className="flex-1 transition-[margin-left] duration-200 ease-in-out"
+        style={{ marginLeft: "var(--sidebar-w, 16rem)" }}
       >
-        <header className="mb-10">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 border-l-4 border-emerald-500 pl-4">
-            Connexions
-          </h1>
-          <p className="text-gray-500 mt-1 pl-4">
-            Gérez vos comptes marchands Vinted et eBay.
-          </p>
-        </header>
-
-        {/* Summary bar */}
-        <div className="flex items-center gap-4 mb-8 p-4 bg-white border border-gray-200 rounded-lg">
-          <div className="flex items-center gap-2 text-sm">
-            <div
-              className={`w-2 h-2 rounded-full ${totalAccounts > 0 ? "bg-emerald-500" : "bg-gray-300"}`}
-            />
-            <span className="font-semibold">{totalAccounts}</span>
-            <span className="text-gray-500">
-              compte{totalAccounts !== 1 ? "s" : ""} connecté
-              {totalAccounts !== 1 ? "s" : ""}
-            </span>
+        <div className="px-10 pt-10 pb-8 border-b border-border">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Link2 size={14} className="text-primary" />
+            </div>
+            <h1 className="text-xl font-semibold tracking-tight">Connexions</h1>
           </div>
-          <div className="h-4 w-px bg-gray-200" />
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <ShoppingBag size={14} />
-            <span>{accounts.vinted.length} Vinted</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Store size={14} />
-            <span>{accounts.ebay.length} eBay</span>
-          </div>
+          <p className="text-muted-foreground text-sm ml-10">Gérez vos comptes marchands Vinted et eBay.</p>
         </div>
 
-        {/* Platform sections */}
-        <div className="space-y-6">
-          <PlatformSection
-            platform="vinted"
-            label="Vinted"
-            icon={<ShoppingBag size={20} />}
-            description="Connexion via l'extension Chrome Fuki."
-            accounts={accounts.vinted}
-            onAdd={() => openModal("vinted")}
-            onRemove={(id) => removeAccount("vinted", id)}
-          />
+        <div className="p-10">
+          <div className="flex items-center gap-5 mb-8 px-5 py-4 bg-card border border-border rounded-xl">
+            <div className="flex items-center gap-2.5 text-sm">
+              <div className={`w-2 h-2 rounded-full ${totalAccounts > 0 ? "bg-primary" : "bg-muted-foreground/30"}`} />
+              <span className="font-semibold text-foreground">{totalAccounts}</span>
+              <span className="text-muted-foreground">compte{totalAccounts !== 1 ? "s" : ""} connecté{totalAccounts !== 1 ? "s" : ""}</span>
+            </div>
+            <div className="h-5 w-px bg-border" />
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <ShoppingBag size={13} className="text-primary" />
+                <span className="font-medium text-foreground">{accounts.vinted.length}</span> Vinted
+              </span>
+              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Store size={13} className="text-primary" />
+                <span className="font-medium text-foreground">{accounts.ebay.length}</span> eBay
+              </span>
+            </div>
+          </div>
 
-          <PlatformSection
-            platform="ebay"
-            label="eBay"
-            icon={<Store size={20} />}
-            description="Connexion via eBay."
-            accounts={accounts.ebay}
-            onAdd={() => openModal("ebay")}
-            onRemove={(id) => removeAccount("ebay", id)}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PlatformSection
+              platform="vinted"
+              label="Vinted"
+              icon={<ShoppingBag size={18} />}
+              description="Vendez vos articles sur Vinted"
+              accounts={accounts.vinted}
+              onAdd={() => openModal("vinted")}
+              onRemove={(id) => removeAccount({ id, platform: "vinted" })}
+            />
+            <PlatformSection
+              platform="ebay"
+              label="eBay"
+              icon={<Store size={18} />}
+              description="Vendez vos articles sur eBay"
+              accounts={accounts.ebay}
+              onAdd={() => openModal("ebay")}
+              onRemove={(id) => removeAccount({ id, platform: "ebay" })}
+            />
+          </div>
         </div>
       </main>
 
-      {/* Modal */}
+      {/* Connect modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white border border-gray-200 w-full max-w-md rounded-xl p-8 shadow-2xl relative">
-            <button
-              onClick={() => !isConnecting && setIsModalOpen(false)}
-              className="absolute top-5 right-5 p-1 text-gray-400 hover:text-gray-900 transition-colors"
-            >
-              <X size={20} />
-            </button>
-
-            <div className="mb-6">
-              <div className="w-10 h-10 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 mb-4">
-                {currentPlatform === "vinted" ? (
-                  <ShoppingBag size={20} />
-                ) : (
-                  <Store size={20} />
-                )}
-              </div>
-              <h3 className="text-lg font-bold">
-                Connecter {currentPlatform === "vinted" ? "Vinted" : "eBay"}
-              </h3>
-              <p className="text-sm text-gray-500 mt-0.5">
-                {currentPlatform === "vinted"
-                  ? "Connectez votre compte Vinted en toute simplicité."
-                  : "Connexion sécurisée via le protocole OAuth2 eBay."}
-              </p>
-            </div>
-
-            {currentPlatform === "vinted" ? (
-              <div className="space-y-6">
-                {!isConnecting ? (
-                  <>
-                    <div className="flex gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-gray-600">
-                      <CheckCircle2
-                        size={18}
-                        className="text-emerald-500 flex-shrink-0 mt-0.5"
-                      />
-                      <p>
-                        Vous allez être redirigé vers{" "}
-                        <strong>vinted.com</strong>. L'extension Fuki s'occupera
-                        du reste.
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={handleVintedConnect}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white w-full py-3 flex items-center justify-center gap-2 text-sm font-bold rounded-md transition-colors shadow-sm active:scale-[0.98]"
-                    >
-                      Continuer sur Vinted
-                    </button>
-                  </>
-                ) : (
-                  <div className="py-8 text-center space-y-6 animate-in fade-in zoom-in duration-300">
-                    <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
-                      <div className="absolute inset-0 border-4 border-emerald-100 rounded-full" />
-                      <div className="absolute inset-0 border-4 border-emerald-500 rounded-full border-t-transparent animate-spin" />
-                      <ShoppingBag size={32} className="text-emerald-500" />
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="font-bold text-gray-900">
-                        En attente de connexion...
-                      </h4>
-                      <p className="text-xs text-gray-500 max-w-[240px] mx-auto">
-                        Veuillez vous connecter sur l'onglet Vinted qui vient de
-                        s'ouvrir.
-                      </p>
-                    </div>
-                    <button
-                      onClick={cancelVintedConnect}
-                      className="text-xs font-bold text-gray-400 hover:text-rose-500 transition-colors uppercase tracking-wider"
-                    >
-                      Annuler la synchronisation
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-5">
-                <div className="flex gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-gray-600">
-                  <CheckCircle2
-                    size={18}
-                    className="text-blue-500 flex-shrink-0 mt-0.5"
-                  />
-                  <p>
-                    Vous allez être redirigé vers <strong>eBay.fr</strong> pour
-                    autoriser l'accès à vos annonces.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-200">
+          <div className="bg-card border border-border w-full max-w-md rounded-xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-7 py-6 border-b border-border">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  {currentPlatform === "vinted" ? <ShoppingBag size={20} /> : <Store size={20} />}
+                </div>
+                <div>
+                  <p className="font-semibold">
+                    Connecter {currentPlatform === "vinted" ? "Vinted" : "eBay"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {currentPlatform === "vinted" ? "Via l'extension Fuki" : "Connexion sécurisée en quelques secondes"}
                   </p>
                 </div>
-                <button
-                  onClick={handleEbayConnect}
-                  disabled={isConnecting}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white w-full py-3 flex items-center justify-center gap-2 text-sm font-bold rounded-md transition-colors disabled:opacity-50"
-                >
-                  {isConnecting ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />{" "}
-                      Connexion...
-                    </>
+              </div>
+              {!isConnecting && !isPolling && (
+                <button onClick={closeModal} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-6">
+              {isPolling ? (
+                <div className="flex flex-col items-center text-center py-4 gap-5">
+                  <div className="w-12 h-12 rounded-full border-2 border-primary/20 flex items-center justify-center">
+                    <Loader2 size={22} className="text-primary animate-spin" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">En attente de connexion</p>
+                    <p className="text-xs text-muted-foreground mt-1">Connectez-vous sur Vinted dans l'onglet ouvert, puis revenez ici.</p>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+                    <div
+                      className="bg-primary h-full transition-all duration-500 rounded-full"
+                      style={{ width: `${Math.min(100, (pollCount / 40) * 100)}%` }}
+                    />
+                  </div>
+                  <button
+                    onClick={() => { setIsPolling(false); setIsModalOpen(false); }}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    {currentPlatform === "vinted"
+                      ? "Cliquez sur le bouton ci-dessous. Vinted s'ouvrira dans un nouvel onglet — connectez-vous et l'extension Fuki fera le reste."
+                      : "Vous allez être redirigé vers eBay pour autoriser l'accès à votre compte."}
+                  </p>
+
+                  {currentPlatform === "vinted" ? (
+                    <button
+                      onClick={handleVintedConnect}
+                      disabled={isConnecting}
+                      className="mt-2 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold text-sm py-2.5 rounded-lg transition-colors disabled:opacity-60"
+                    >
+                      {isConnecting ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <>
+                          <ExternalLink size={15} />
+                          Ouvrir Vinted
+                        </>
+                      )}
+                    </button>
                   ) : (
-                    <>Se connecter avec eBay</>
+                    <button
+                      onClick={handleEbayConnect}
+                      disabled={isConnecting}
+                      className="mt-2 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold text-sm py-2.5 rounded-lg transition-colors disabled:opacity-60"
+                    >
+                      {isConnecting ? <Loader2 size={16} className="animate-spin" /> : "Continuer sur eBay"}
+                    </button>
                   )}
+
+                  <button onClick={closeModal} className="text-xs text-center text-muted-foreground hover:text-foreground transition-colors py-1">
+                    Annuler
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-200">
+          <div className="bg-card border border-border w-full max-w-xs rounded-xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-border flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                <AlertTriangle size={15} className="text-red-500" />
+              </div>
+              <p className="text-sm font-semibold">Déconnecter le compte ?</p>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-muted-foreground mb-5">
+                Le compte <span className="font-medium text-foreground">{accountToDelete?.platform}</span> sera supprimé définitivement.
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={confirmDelete}
+                  className="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm rounded-lg transition-colors"
+                >
+                  Confirmer
+                </button>
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="w-full py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Annuler
                 </button>
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}
@@ -292,89 +320,59 @@ export default function Connections() {
   );
 }
 
-function PlatformSection({
-  platform,
-  label,
-  icon,
-  description,
-  accounts,
-  onAdd,
-  onRemove,
-}) {
+function PlatformSection({ label, icon, description, accounts, onAdd, onRemove }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-      {/* Section header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-border">
         <div className="flex items-center gap-3">
-          <span className="text-emerald-600">{icon}</span>
+          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+            {icon}
+          </div>
           <div>
-            <h3 className="font-bold text-gray-900">{label}</h3>
-            <p className="text-xs text-gray-400">{description}</p>
+            <p className="font-semibold text-sm">{label}</p>
+            <p className="text-xs text-muted-foreground">{description}</p>
           </div>
         </div>
         <button
           onClick={onAdd}
-          className="flex items-center gap-1.5 text-xs font-bold py-1.5 px-3 border border-gray-200 rounded-md hover:bg-emerald-500 hover:text-white hover:border-emerald-500 transition-all"
+          className="flex items-center gap-1.5 text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-lg transition-colors"
         >
-          <Plus size={14} />
-          Ajouter
+          <Plus size={13} /> Ajouter
         </button>
       </div>
-
-      {/* Account list */}
-      {accounts.length === 0 ? (
-        <div className="px-6 py-10 text-center">
-          <p className="text-sm text-gray-400">
-            Aucun compte {label} connecté.
-          </p>
-          <button
-            onClick={onAdd}
-            className="mt-3 text-xs text-emerald-600 font-bold hover:underline"
-          >
-            + Connecter un compte
-          </button>
-        </div>
-      ) : (
-        <ul className="divide-y divide-gray-100">
-          {accounts.map((account) => (
-            <li
-              key={account.id}
-              className="flex items-center justify-between px-6 py-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-100 flex-shrink-0">
-                  <img
-                    src={platform === "vinted" ? "/vinted.jpeg" : "/ebay.png"}
-                    alt={platform}
-                    className="w-full h-full object-cover"
-                  />
+      <div>
+        {accounts.length === 0 ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            Aucun compte connecté
+          </div>
+        ) : (
+          <ul>
+            {accounts.map((account) => (
+              <li key={account.id} className="flex items-center justify-between px-6 py-4 border-b border-border last:border-0 group hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full border border-border overflow-hidden shrink-0">
+                    <img
+                      src={label.toLowerCase() === "vinted" ? "/vinted.jpeg" : "/ebay.png"}
+                      className="w-full h-full object-cover"
+                      alt={label}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{account.username}</p>
+                    <p className="text-xs text-muted-foreground">Connecté le {account.connectedAt}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">
-                    {account.username}
-                  </p>
-                  {account.connectedAt && (
-                    <p className="text-[11px] text-gray-400">
-                      Connecté le {account.connectedAt}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                  Actif
-                </span>
                 <button
                   onClick={() => onRemove(account.id)}
-                  className="p-1.5 text-gray-300 hover:text-red-500 transition-colors rounded"
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
                 >
                   <Trash2 size={14} />
                 </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

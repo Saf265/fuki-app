@@ -1,10 +1,10 @@
 import { db } from "@/src/db/drizzle/index";
-import { connectedAccounts } from "@/src/db/drizzle/schema";
-import { auth } from "@/src/lib/auth";
+import { connectedAccounts, users } from "@/src/db/drizzle/schema";
 import { nanoid } from "nanoid";
-import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
+const DEFAULT_USER_ID = "default-user";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -33,12 +33,6 @@ export async function GET(request) {
   params.append("redirect_uri", redirectUri);
 
   const bodyString = params.toString();
-
-  console.log("--- DEBUG EBAY TOKEN EXCHANGE ---");
-  console.log("URL:", "https://api.sandbox.ebay.com/identity/v1/oauth2/token");
-  console.log("Auth Header (trimmed):", `Basic ${basicAuth.substring(0, 10)}...`);
-  console.log("Body:", bodyString);
-  console.log("------------------");
 
   const tokenRes = await fetch(
     "https://api.sandbox.ebay.com/identity/v1/oauth2/token",
@@ -74,8 +68,6 @@ export async function GET(request) {
   let platformUserId = null;
 
   try {
-    console.log("--- DEBUG EBAY IDENTITY FETCH ---");
-    // Try apiz.sandbox.ebay.com first (Newer Identity API)
     const userRes = await fetch(
       "https://apiz.sandbox.ebay.com/commerce/identity/v1/user",
       {
@@ -85,52 +77,28 @@ export async function GET(request) {
     
     if (userRes.ok) {
       const userData = await userRes.json();
-      console.log("Full User Data Received:", JSON.stringify(userData, null, 2));
-      
-      // Capture platform ID
       platformUserId = userData.userId || userData.username || null;
-      
-      // Capture Email
       email = userData.email || null;
       
-      // Capture Name (Individual)
       if (userData.individualAccount) {
         firstName = userData.individualAccount.firstName || null;
         lastName = userData.individualAccount.lastName || null;
-        if (!email && userData.individualAccount.email) {
-          email = userData.individualAccount.email;
-        }
       } 
-      // Capture Name (Business)
       if (userData.businessAccount) {
         firstName = userData.businessAccount.contactFirstName || userData.businessAccount.businessName || null;
         lastName = userData.businessAccount.contactLastName || null;
-        if (!email && userData.businessAccount.email) {
-          email = userData.businessAccount.email;
-        }
       }
-
-      console.log("Extracted Identity:", { firstName, lastName, email, platformUserId });
-    } else {
-      const errorText = await userRes.text();
-      console.error("eBay Identity Fetch Failed (HTTP " + userRes.status + "):", errorText);
-      
-      // Fallback: If identity API fails, we still have the tokens, so we'll continue 
-      // with just the tokens and a generic ID if needed.
     }
-    console.log("------------------");
   } catch (e) {
     console.warn("Exception during eBay identity fetch:", e.message);
   }
 
-  // ─── 3. Get current Fuki session ────────────────────────────────────────────
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session?.user?.id) {
-    return NextResponse.redirect(
-      new URL("/login?error=not_authenticated", request.url),
-    );
-  }
+  // Ensure default user exists
+  await db.insert(users).values({
+    id: DEFAULT_USER_ID,
+    name: "Utilisateur",
+    email: "default@fuki.app",
+  }).onConflictDoNothing();
 
   // ─── 4. Upsert into connected_accounts ──────────────────────────────────────
   const accessTokenExpiresAt = new Date(Date.now() + expiresIn * 1000);
@@ -140,7 +108,7 @@ export async function GET(request) {
   if (platformUserId) {
     existingAccount = await db.query.connectedAccounts.findFirst({
       where: (ca, { and, eq }) => and(
-        eq(ca.userId, session.user.id),
+        eq(ca.userId, DEFAULT_USER_ID),
         eq(ca.platform, "ebay"),
         eq(ca.platformUserId, platformUserId)
       )
@@ -166,7 +134,7 @@ export async function GET(request) {
       .insert(connectedAccounts)
       .values({
         id: nanoid(),
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
         platform: "ebay",
         firstName,
         lastName,

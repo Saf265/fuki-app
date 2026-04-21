@@ -1,35 +1,27 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/src/lib/auth";
 import { db } from "@/src/db/drizzle/index";
 import { connectedAccounts } from "@/src/db/drizzle/schema";
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import { getValidEbayToken } from "@/src/lib/ebay";
+
+const DEFAULT_USER_ID = "default-user";
 
 export async function GET(request) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // 1. Fetch all connected eBay accounts
+    // Fetch all connected eBay accounts for default user
     const ebayAccounts = await db
       .select()
       .from(connectedAccounts)
-      .where(eq(connectedAccounts.userId, session.user.id))
+      .where(eq(connectedAccounts.userId, DEFAULT_USER_ID))
       .then(rows => rows.filter(r => r.platform === "ebay"));
 
     let allConversations = [];
 
-    // 2. Aggregate messages from each eBay account
+    // Aggregate messages from each eBay account
     for (const account of ebayAccounts) {
       try {
         const accessToken = await getValidEbayToken(account.id);
         
-        // Fetch recent messages
-        // Note: eBay REST Messaging API
         const msgsRes = await fetch(
           "https://apiz.sandbox.ebay.com/sell/messaging/v1/member_message?limit=20",
           {
@@ -39,7 +31,6 @@ export async function GET(request) {
 
         if (msgsRes.ok) {
           const data = await msgsRes.json();
-          // Map eBay messages to our common format
           const mapped = (data.memberMessages || []).map(m => ({
             id: m.messageId,
             platform: "ebay",
@@ -59,15 +50,13 @@ export async function GET(request) {
             ]
           }));
           allConversations = [...allConversations, ...mapped];
-        } else {
-          console.error(`Failed to fetch messages for eBay account ${account.id}:`, await msgsRes.text());
         }
       } catch (err) {
         console.warn(`Error fetching eBay messages for ${account.id}:`, err.message);
       }
     }
 
-    // Mock some Vinted data if none exist (for UI demo)
+    // Mock some data if none exist (for UI demo)
     if (allConversations.length === 0) {
        allConversations = [
         {

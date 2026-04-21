@@ -1,39 +1,42 @@
 import { db } from "@/src/db/drizzle/index";
-import { pendingSyncs } from "@/src/db/drizzle/schema";
-import { auth } from "@/src/lib/auth";
+import { pendingSyncs, users } from "@/src/db/drizzle/schema";
 import { redis } from "@/src/lib/upstash";
 import { nanoid } from "nanoid";
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+
+const DEFAULT_USER_ID = "default-user";
 
 export async function GET(request) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Ensure default user exists
+    await db
+      .insert(users)
+      .values({
+        id: DEFAULT_USER_ID,
+        name: "Utilisateur",
+        email: "default@fuki.app",
+      })
+      .onConflictDoNothing();
 
     // Get domain from query params
     const { searchParams } = new URL(request.url);
-    const domain = searchParams.get("domain") || "vinted.fr";
+    const domain = searchParams.get("domain") || "vinted.com";
 
     // Generate a 5-digit token
     const token = Math.floor(10000 + Math.random() * 90000).toString();
     const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
 
     // Store in Redis with TTL (2 minutes)
-    // Map token -> { userId, domain }
     await redis.set(
       `pending_sync:${token}`,
-      JSON.stringify({ userId: session.user.id, domain }),
+      JSON.stringify({ userId: DEFAULT_USER_ID, domain }),
       { ex: 120 },
     );
 
     // Also store in DB for record keeping
     await db.insert(pendingSyncs).values({
       id: nanoid(),
-      userId: session.user.id,
+      userId: DEFAULT_USER_ID,
       token: token,
       domain: domain,
       expiresAt: expiresAt,
