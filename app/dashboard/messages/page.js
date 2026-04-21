@@ -559,31 +559,46 @@ function OfferModal({ conversationId, accountId, userSide, transaction, referenc
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
 
-  // Prix de base à afficher selon le contexte
-  // - Acheteur : prix original de l'article (ce que le vendeur demande)
-  // - Vendeur : dernière offre reçue de l'acheteur
-  const originalPrice = transaction?.item_is_closed ? null : (
-    parseFloat(transaction?.offer_price?.amount ?? 0) || null
-  );
+  const originalPrice = transaction?.item_is_closed ? null
+    : parseFloat(transaction?.offer_price?.amount ?? 0) || null;
   const itemTitle = transaction?.item_title;
 
+  // Règles de validation
+  const MAX_PRICE = 10000;
+  // Acheteur : min = 60% du prix de base (max -40%), pas de limite haute sauf 10K
+  const minBuyerPrice = (userSide === "buyer" && originalPrice)
+    ? Math.ceil(originalPrice * 0.6 * 100) / 100
+    : null;
+
+  const validate = (val) => {
+    if (!val || val <= 0) return "Prix invalide";
+    if (val > MAX_PRICE) return `Maximum ${MAX_PRICE.toLocaleString("fr-FR")} €`;
+    if (userSide === "buyer" && minBuyerPrice && val < minBuyerPrice) {
+      return `Offre trop basse — minimum ${minBuyerPrice.toFixed(2).replace(".", ",")} €`;
+    }
+    return null;
+  };
+
+  const priceVal = parseFloat(price);
+  const validationError = price ? validate(priceVal) : null;
+
   const sendOffer = async () => {
-    const val = parseFloat(price);
-    if (!val || val <= 0) { setError("Prix invalide"); return; }
+    const err = validate(priceVal);
+    if (err) { setError(err); return; }
     setIsSending(true);
     setError(null);
     try {
       const res = await fetch(`/api/messages/${conversationId}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId, offer_price: val }),
+        body: JSON.stringify({ accountId, offer_price: priceVal }),
       });
       if (!res.ok) throw new Error("Erreur lors de l'envoi");
       onSent({
         id: Date.now(),
         entity_type: "offer_message",
         entity: {
-          price_label: `${val.toFixed(2).replace(".", ",")} €`,
+          price_label: `${priceVal.toFixed(2).replace(".", ",")} €`,
           original_price_label: originalPrice ? `${originalPrice.toFixed(2).replace(".", ",")} €` : null,
           user_id: userSide === "seller" ? transaction?.seller_id : transaction?.buyer_id,
         },
@@ -633,7 +648,16 @@ function OfferModal({ conversationId, accountId, userSide, transaction, referenc
                 <p className="text-xs font-medium truncate">{itemTitle}</p>
                 {originalPrice && (
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {userSide === "seller" ? "Offre reçue" : "Prix demandé"} : <span className="font-semibold text-foreground">{originalPrice.toFixed(2).replace(".", ",")} €</span>
+                    {userSide === "seller" ? "Offre reçue" : "Prix demandé"} :{" "}
+                    <span className="font-semibold text-foreground">
+                      {originalPrice.toFixed(2).replace(".", ",")} €
+                    </span>
+                  </p>
+                )}
+                {/* Hint acheteur */}
+                {userSide === "buyer" && minBuyerPrice && (
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Offre min. acceptée : <span className="font-medium">{minBuyerPrice.toFixed(2).replace(".", ",")} €</span>
                   </p>
                 )}
               </div>
@@ -643,27 +667,32 @@ function OfferModal({ conversationId, accountId, userSide, transaction, referenc
           {/* Input prix */}
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Votre offre</label>
-            <div className="flex items-center border border-border rounded-lg overflow-hidden focus-within:border-primary/50 transition-colors">
+            <div className={`flex items-center border rounded-lg overflow-hidden transition-colors ${validationError ? "border-red-400 focus-within:border-red-400" : "border-border focus-within:border-primary/50"
+              }`}>
               <input
                 type="number"
                 value={price}
                 onChange={(e) => { setPrice(e.target.value); setError(null); }}
                 placeholder="0.00"
                 step="0.5"
-                min="0"
+                min={minBuyerPrice ?? 0}
+                max={MAX_PRICE}
                 autoFocus
                 className="flex-1 px-4 py-2.5 text-sm bg-transparent outline-none"
               />
               <span className="px-3 text-sm text-muted-foreground border-l border-border bg-muted/30">€</span>
             </div>
-            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+            {/* Erreur validation en temps réel */}
+            {(validationError || error) && (
+              <p className="text-xs text-red-500 mt-1.5">{validationError || error}</p>
+            )}
           </div>
 
           {/* Actions */}
           <div className="flex flex-col gap-2 pt-1">
             <button
               onClick={sendOffer}
-              disabled={isSending || !price}
+              disabled={isSending || !price || !!validationError}
               className="w-full py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSending ? <Loader2 size={15} className="animate-spin" /> : "Envoyer l'offre"}
