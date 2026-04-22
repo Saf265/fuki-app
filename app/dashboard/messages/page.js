@@ -351,6 +351,29 @@ function ConversationDetail({ conv, accountId, messagesCache, setMessagesCache }
         )}
       </div>
 
+      {/* Pending offer actions */}
+      {!isLoading && !error && conversation && (
+        <PendingOfferActions
+          conversation={conversation}
+          accountId={accountId}
+          conversationId={conv.conv_id}
+          currentUserId={currentUserId}
+          onAction={(msg) => {
+            setMessagesCache((prev) => {
+              const current = prev[cacheKey];
+              if (!current) return prev;
+              return {
+                ...prev,
+                [cacheKey]: {
+                  ...current,
+                  messages: [...current.messages, msg],
+                },
+              };
+            });
+          }}
+        />
+      )}
+
       {/* Input */}
       {!isLoading && !error && (
         <MessageInput
@@ -476,6 +499,183 @@ function MessageBubble({ msg, currentUserId }) {
         )}
       </div>
     </div>
+  );
+}
+
+// ─── Pending offer actions ────────────────────────────────────────────────────
+
+function PendingOfferActions({ conversation, accountId, conversationId, currentUserId, onAction }) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showCounterModal, setShowCounterModal] = useState(false);
+
+  const messages = conversation?.messages ?? [];
+  const transaction = conversation?.transaction;
+  const userSide = transaction?.current_user_side;
+  const isClosed = transaction?.item_is_closed === true;
+
+  // Si l'item est fermé, afficher un message
+  if (isClosed) {
+    return (
+      <div className="px-5 py-3 border-t border-border shrink-0 bg-muted/20">
+        <div className="flex items-center gap-2">
+          <AlertCircle size={13} className="text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">
+            Cette conversation est fermée
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Chercher la dernière offre avec current: true
+  let pendingOffer = null;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    const isOfferType = msg.entity_type === "offer_request_message" || msg.entity_type === "offer_message";
+    const isCurrent = msg.entity?.current === true;
+
+    if (isOfferType && isCurrent) {
+      pendingOffer = msg;
+      break;
+    }
+  }
+
+  if (!pendingOffer || !transaction) return null;
+
+  const isFromOther = String(pendingOffer.entity?.user_id) !== String(currentUserId);
+  const offerPrice = pendingOffer.entity?.price?.amount
+    ? parseFloat(pendingOffer.entity.price.amount)
+    : null;
+  const offerLabel = pendingOffer.entity?.price_label || `${offerPrice} €`;
+
+  // L'offer_id est dans offer_request_id pour offer_request_message, ou dans l'id du message
+  const offerId = pendingOffer.entity?.offer_request_id || pendingOffer.id;
+
+  // Si c'est l'offre du user, afficher un message d'attente
+  if (!isFromOther) {
+    return (
+      <div className="px-5 py-3 border-t border-border shrink-0 bg-muted/20">
+        <div className="flex items-center gap-2">
+          <Tag size={13} className="text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">
+            Votre offre de <span className="font-semibold text-foreground">{offerLabel}</span> est en attente de réponse
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Sinon, afficher les boutons d'action
+  const handleAccept = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch(`/api/messages/${conversationId}/accept-offer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountId,
+          transaction_id: transaction.id,
+          offer_id: offerId,
+        }),
+      });
+      if (!res.ok) throw new Error("Erreur lors de l'acceptation");
+      console.log("✅ Offre acceptée");
+
+      // Optimistic update
+      onAction({
+        id: Date.now(),
+        entity_type: "action_message",
+        entity: {
+          title: "Offre acceptée",
+          subtitle: `Vous avez accepté l'offre de ${offerLabel}`,
+        },
+        created_at_ts: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error("❌ Erreur:", e);
+      alert(e.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReject = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch(`/api/messages/${conversationId}/reject-offer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountId,
+          transaction_id: transaction.id,
+          offer_id: offerId,
+        }),
+      });
+      if (!res.ok) throw new Error("Erreur lors du refus");
+      console.log("✅ Offre refusée");
+
+      // Optimistic update
+      onAction({
+        id: Date.now(),
+        entity_type: "action_message",
+        entity: {
+          title: "Offre refusée",
+          subtitle: `Vous avez refusé l'offre de ${offerLabel}`,
+        },
+        created_at_ts: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error("❌ Erreur:", e);
+      alert(e.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="px-5 py-3 border-t border-border shrink-0 bg-muted/20">
+        <div className="flex items-center gap-2 mb-2">
+          <Tag size={13} className="text-primary" />
+          <p className="text-xs font-semibold text-primary">Offre en attente : {offerLabel}</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleAccept}
+            disabled={isProcessing}
+            className="flex-1 py-2 bg-primary hover:bg-primary-hover text-white font-semibold text-xs rounded-lg transition-colors disabled:opacity-50"
+          >
+            {isProcessing ? <Loader2 size={13} className="animate-spin mx-auto" /> : "Accepter"}
+          </button>
+          <button
+            onClick={handleReject}
+            disabled={isProcessing}
+            className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 font-semibold text-xs rounded-lg transition-colors border border-red-500/20 disabled:opacity-50"
+          >
+            {isProcessing ? <Loader2 size={13} className="animate-spin mx-auto" /> : "Refuser"}
+          </button>
+          <button
+            onClick={() => setShowCounterModal(true)}
+            disabled={isProcessing}
+            className="flex-1 py-2 bg-muted hover:bg-muted/80 text-foreground font-semibold text-xs rounded-lg transition-colors border border-border disabled:opacity-50"
+          >
+            Contre-offre
+          </button>
+        </div>
+      </div>
+
+      {showCounterModal && (
+        <OfferModal
+          conversationId={conversationId}
+          accountId={accountId}
+          userSide={userSide}
+          transaction={transaction}
+          referencePrice={offerPrice}
+          onClose={() => setShowCounterModal(false)}
+          onSent={(msg) => { onAction(msg); setShowCounterModal(false); }}
+        />
+      )}
+    </>
   );
 }
 

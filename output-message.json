@@ -1,252 +1,258 @@
 {
-  "conversation": {
-    "id": 21160542503,
-    "read_by_current_user": true,
-    "read_by_opposite_user": false,
-    "localization": "none",
-    "translated": false,
-    "allow_reply": true,
-    "is_suspicious": false,
-    "is_deletion_restricted": false,
-    "subtitle": "Vous le prenez?",
-    "messages": [
-      {
-        "id": 4306779590,
-        "entity_type": "offer_request_message",
-        "entity": {
-          "offer_request_id": 4306779590,
-          "transaction_id": 18464079750,
-          "user_id": 14006252,
-          "status": 30,
-          "status_title": "Refusée",
-          "body": "17,00 €",
-          "title": "Hey, nathala7 t'a fait une offre",
-          "price_label": "17,00 €",
-          "original_price_label": "26,99 €",
-          "original_price": {
-            "amount": "26.99",
-            "currency_code": "EUR"
-          },
-          "price": {
-            "amount": "17.0",
-            "currency_code": "EUR"
-          },
-          "currency": "EUR",
-          "current": true,
-          "price_fixed": true
-        },
-        "created_at_ts": "2026-03-08T13:21:13+01:00"
-      },
-      {
-        "entity_type": "message",
-        "entity": {
-          "body": "Bonjour, offre acceptée",
-          "photos": [],
-          "user_id": 269919915,
-          "sent_via_mobile": true,
-          "id": 58350700129,
-          "is_hidden": false,
-          "safety_flag": 0
-        },
-        "created_at_ts": "2026-03-08T14:46:11+01:00",
-        "created_time_ago": "08/03/2026"
-      },
-      {
-        "id": 30857733525,
-        "entity_type": "offer_message",
-        "entity": {
-          "price_label": "15,00 €",
-          "price": {
-            "amount": "15.0",
-            "currency_code": "EUR"
-          },
-          "original_price_label": "26,99 €",
-          "original_price": {
-            "amount": "26.99",
-            "currency_code": "EUR"
-          },
-          "currency": "EUR",
-          "user_id": 269919915,
-          "current": true,
-          "price_fixed": true
-        },
-        "created_at_ts": "2026-04-18T19:27:49+02:00"
-      },
-      {
-        "entity_type": "message",
-        "entity": {
-          "body": "Vous le prenez?",
-          "photos": [],
-          "user_id": 269919915,
-          "sent_via_mobile": false,
-          "id": 60879109636,
-          "is_hidden": false,
-          "safety_flag": 0
-        },
-        "created_at_ts": "2026-04-20T19:12:45+02:00",
-        "created_time_ago": "il y a 23 heures"
-      }
-    ],
-    "suggested_messages": [],
-    "transaction": {
-      "id": 18464079750,
-      "status": 1,
-      "offline_verification": false,
-      "offer_id": 30857733525,
-      "buyer_id": 14006252,
-      "seller_id": 269919915,
-      "is_completed": false,
-      "shipping_order_id": 8560660515,
-      "purchase_id": null,
-      "has_warranty": false,
-      "available_actions": [
-        "delete_thread",
-        "mark_as_sold",
-        "offer",
-        "reserve",
-        "sell",
-        "transfer",
-        "use_payments"
-      ],
-      "current_user_side": "seller",
-      "is_bundle": false,
-      "is_reserved": false,
-      "is_business_seller": false,
-      "item_count": 1,
-      "item_id": 7396030168,
-      "item_ids": [
-        7396030168
-      ],
-      "item_title": "Minecraft PS4 (édition physique) - Prix négociable",
-      "item_photo": {
-        "id": 30988655795,
-        "image_no": 1,
-        "width": 800,
-        "height": 800,
-        "dominant_color": "#8D6842",
-        "dominant_color_opaque": "#DDD2C6",
-        "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/f800/1761320381.jpeg?s=77d58ed76cd968921b7401037bdd39a347728fdd",
-        "is_main": true,
-        "thumbnails": [
-          {
-            "type": "thumb70x100",
-            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/70x100/1761320381.jpeg?s=bd46e78d8669bc9f228ce8cb40f8f143456a872f",
-            "width": 70,
-            "height": 100,
-            "original_size": null
-          },
-          {
-            "type": "thumb150x210",
-            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/150x210/1761320381.jpeg?s=c0ce5cfa0f9607716f6d712aa02defb2f265d5c3",
-            "width": 150,
-            "height": 210,
-            "original_size": null
-          },
-          {
-            "type": "thumb310x430",
-            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/310x430/1761320381.jpeg?s=95fef51a91b45414220e1065da62a177699ee809",
-            "width": 310,
-            "height": 430,
-            "original_size": null
-          },
-          {
-            "type": "thumb428x624",
-            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/f800/1761320381.jpeg?s=77d58ed76cd968921b7401037bdd39a347728fdd",
-            "width": 428,
-            "height": 428,
-            "original_size": true
-          },
-          {
-            "type": "thumb624x428",
-            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/f800/1761320381.jpeg?s=77d58ed76cd968921b7401037bdd39a347728fdd",
-            "width": 624,
-            "height": 624,
-            "original_size": true
-          },
-          {
-            "type": "thumb364x428",
-            "url": "https://images1.vinted.net/t/01_012ff_M88XRx18k2W6j4ARJazrxUD1/f800/1761320381.jpeg?s=77d58ed76cd968921b7401037bdd39a347728fdd",
-            "width": 364,
-            "height": 364,
-            "original_size": true
-          }
-        ],
-        "high_resolution": {
-          "id": "01_012ff_M88XRx18k2W6j4ARJazrxUD1",
-          "timestamp": 1761320381,
-          "orientation": 0
-        },
+    "conversation": {
+        "id": 19229302925,
+        "read_by_current_user": true,
+        "read_by_opposite_user": false,
+        "localization": "none",
+        "translated": false,
+        "allow_reply": true,
         "is_suspicious": false,
-        "full_size_url": "https://images1.vinted.net/tc/01_012ff_M88XRx18k2W6j4ARJazrxUD1/1761320381.jpeg?s=898be55867d706c50db72c8609aa42e922bb7c84",
-        "is_hidden": false,
-        "extra": {}
-      },
-      "item_url": "https://www.vinted.fr/items/7396030168-minecraft-ps4-edition-physique-prix-negociable",
-      "item_is_closed": false,
-      "offer_price": {
-        "amount": "15.0",
-        "currency_code": "EUR"
-      },
-      "service_fee": {
-        "amount": "1.45",
-        "currency_code": "EUR"
-      },
-      "total_amount_without_tax": {
-        "amount": "16.45",
-        "currency_code": "EUR"
-      },
-      "closet_countdown_end_date": null,
-      "seller_bundle_discount": {
-        "id": 38751617,
-        "user_id": 269919915,
-        "enabled": true,
-        "minimal_item_count": 2,
-        "fraction": "0.05",
-        "discounts": [
-          {
-            "minimal_item_count": 2,
-            "fraction": "0.05"
-          },
-          {
-            "minimal_item_count": 3,
-            "fraction": "0.1"
-          },
-          {
-            "minimal_item_count": 5,
-            "fraction": "0.15"
-          }
-        ]
-      },
-      "seller_item_count": 30,
-      "seller_city": "Montpellier",
-      "shipment_id": null,
-      "shipment_status": null,
-      "package_size_code": null
+        "is_deletion_restricted": false,
+        "subtitle": "Bonjour, accepterais-tu de me vendre ceci à 15,00 € ?",
+        "messages": [
+            {
+                "id": 3712157947,
+                "entity_type": "offer_request_message",
+                "entity": {
+                    "offer_request_id": 3712157947,
+                    "transaction_id": 16610902320,
+                    "user_id": 43270125,
+                    "status": 10,
+                    "status_title": "En attente",
+                    "body": "15,00 €",
+                    "title": "Hey, charlotte7501420 t'a fait une offre",
+                    "price_label": "15,00 €",
+                    "original_price_label": "20,00 €",
+                    "original_price": {
+                        "amount": "20.0",
+                        "currency_code": "EUR"
+                    },
+                    "price": {
+                        "amount": "15.0",
+                        "currency_code": "EUR"
+                    },
+                    "currency": "EUR",
+                    "current": true,
+                    "price_fixed": true
+                },
+                "created_at_ts": "2025-11-17T14:42:37+01:00"
+            }
+        ],
+        "suggested_messages": [],
+        "transaction": {
+            "id": 16610902320,
+            "status": 1,
+            "offline_verification": false,
+            "offer_id": 26266748085,
+            "buyer_id": 43270125,
+            "seller_id": 269919915,
+            "is_completed": false,
+            "shipping_order_id": 6287244447,
+            "purchase_id": null,
+            "has_warranty": false,
+            "available_actions": [
+                "delete_thread",
+                "mark_as_sold",
+                "offer",
+                "reserve",
+                "sell",
+                "transfer",
+                "use_payments"
+            ],
+            "current_user_side": "seller",
+            "is_bundle": false,
+            "is_reserved": false,
+            "is_business_seller": false,
+            "item_count": 1,
+            "item_id": 7448247691,
+            "item_ids": [
+                7448247691
+            ],
+            "item_title": "Sweat à capuche \"Faith Over Fear\" unisexe",
+            "item_photo": {
+                "id": 31212646957,
+                "image_no": 1,
+                "width": 800,
+                "height": 800,
+                "dominant_color": "#1B1A1A",
+                "dominant_color_opaque": "#BBBABA",
+                "url": "https://images1.vinted.net/t/04_01658_n1fZT1sFNTVsi35B18NCSPes/f800/1761917890.webp?s=939a90b0e0bc02a9f19468e980a8aa5e7cd9717c",
+                "is_main": true,
+                "thumbnails": [
+                    {
+                        "type": "thumb70x100",
+                        "url": "https://images1.vinted.net/t/04_01658_n1fZT1sFNTVsi35B18NCSPes/70x100/1761917890.webp?s=9e18d42594574803fd91e7c54c06543b9a4fb54e",
+                        "width": 70,
+                        "height": 100,
+                        "original_size": null
+                    },
+                    {
+                        "type": "thumb150x210",
+                        "url": "https://images1.vinted.net/t/04_01658_n1fZT1sFNTVsi35B18NCSPes/150x210/1761917890.webp?s=1fe54106828e6dbe4c3aca3396283470936ff241",
+                        "width": 150,
+                        "height": 210,
+                        "original_size": null
+                    },
+                    {
+                        "type": "thumb310x430",
+                        "url": "https://images1.vinted.net/t/04_01658_n1fZT1sFNTVsi35B18NCSPes/310x430/1761917890.webp?s=dba1ece05e79b42cf2b115e19f6be93b30bc7181",
+                        "width": 310,
+                        "height": 430,
+                        "original_size": null
+                    },
+                    {
+                        "type": "thumb428x624",
+                        "url": "https://images1.vinted.net/t/04_01658_n1fZT1sFNTVsi35B18NCSPes/f800/1761917890.webp?s=939a90b0e0bc02a9f19468e980a8aa5e7cd9717c",
+                        "width": 428,
+                        "height": 428,
+                        "original_size": true
+                    },
+                    {
+                        "type": "thumb624x428",
+                        "url": "https://images1.vinted.net/t/04_01658_n1fZT1sFNTVsi35B18NCSPes/f800/1761917890.webp?s=939a90b0e0bc02a9f19468e980a8aa5e7cd9717c",
+                        "width": 624,
+                        "height": 624,
+                        "original_size": true
+                    },
+                    {
+                        "type": "thumb364x428",
+                        "url": "https://images1.vinted.net/t/04_01658_n1fZT1sFNTVsi35B18NCSPes/f800/1761917890.webp?s=939a90b0e0bc02a9f19468e980a8aa5e7cd9717c",
+                        "width": 364,
+                        "height": 364,
+                        "original_size": true
+                    }
+                ],
+                "high_resolution": {
+                    "id": "04_01658_n1fZT1sFNTVsi35B18NCSPes",
+                    "timestamp": 1761917890,
+                    "orientation": 0
+                },
+                "is_suspicious": false,
+                "full_size_url": "https://images1.vinted.net/tc/04_01658_n1fZT1sFNTVsi35B18NCSPes/1761917890.webp?s=12d113648f81a3bbdf3994fed58031b8d29f1360",
+                "is_hidden": false,
+                "extra": {}
+            },
+            "item_url": "https://www.vinted.fr/items/7448247691-sweat-a-capuche-faith-over-fear-unisexe",
+            "item_is_closed": false,
+            "offer_price": {
+                "amount": "20.0",
+                "currency_code": "EUR"
+            },
+            "service_fee": {
+                "amount": "1.7",
+                "currency_code": "EUR"
+            },
+            "total_amount_without_tax": {
+                "amount": "21.7",
+                "currency_code": "EUR"
+            },
+            "closet_countdown_end_date": null,
+            "seller_bundle_discount": {
+                "id": 38751617,
+                "user_id": 269919915,
+                "enabled": true,
+                "minimal_item_count": 2,
+                "fraction": "0.05",
+                "discounts": [
+                    {
+                        "minimal_item_count": 2,
+                        "fraction": "0.05"
+                    },
+                    {
+                        "minimal_item_count": 3,
+                        "fraction": "0.1"
+                    },
+                    {
+                        "minimal_item_count": 5,
+                        "fraction": "0.15"
+                    }
+                ]
+            },
+            "seller_item_count": 30,
+            "seller_city": "Montpellier",
+            "shipment_id": null,
+            "shipment_status": null,
+            "package_size_code": null
+        },
+        "opposite_user": {
+            "id": 43270125,
+            "login": "charlotte7501420",
+            "is_system": false,
+            "review_count": 24,
+            "feedback_reputation": 1.0,
+            "is_hated": false,
+            "profile_url": "https://www.vinted.fr/member/43270125",
+            "location_description": "France, Paris",
+            "country_code": "FR",
+            "is_on_holiday": false,
+            "photo": {
+                "id": 205113892,
+                "width": 450,
+                "height": 800,
+                "temp_uuid": null,
+                "url": "https://images1.vinted.net/t/02_00255_tdWXTR8jfyzPyoQ5M7CAeMFp/f800/1724482008.webp?s=7e88e7a41515d2a1ea2032721a36baca54573a41",
+                "dominant_color": "#31abc2",
+                "dominant_color_opaque": "#C1E6ED",
+                "thumbnails": [
+                    {
+                        "type": "thumb310",
+                        "url": "https://images1.vinted.net/t/02_00255_tdWXTR8jfyzPyoQ5M7CAeMFp/310x310/1724482008.webp?s=f54c1e634a70ee3771f0e5c5b72b92988b3fa5d9",
+                        "width": 310,
+                        "height": 310,
+                        "original_size": null
+                    },
+                    {
+                        "type": "thumb150",
+                        "url": "https://images1.vinted.net/t/02_00255_tdWXTR8jfyzPyoQ5M7CAeMFp/150x150/1724482008.webp?s=3b96505f2fa5ae5a6b0355c413eeec6f89d22c60",
+                        "width": 150,
+                        "height": 150,
+                        "original_size": null
+                    },
+                    {
+                        "type": "thumb100",
+                        "url": "https://images1.vinted.net/t/02_00255_tdWXTR8jfyzPyoQ5M7CAeMFp/100x100/1724482008.webp?s=f3cbc1998c8b5f60963c4c7bbc1a9a41489671fd",
+                        "width": 100,
+                        "height": 100,
+                        "original_size": null
+                    },
+                    {
+                        "type": "thumb50",
+                        "url": "https://images1.vinted.net/t/02_00255_tdWXTR8jfyzPyoQ5M7CAeMFp/50x50/1724482008.webp?s=6c447122323d75ffd29c3a2df4a897c837ee227e",
+                        "width": 50,
+                        "height": 50,
+                        "original_size": null
+                    },
+                    {
+                        "type": "thumb20",
+                        "url": "https://images1.vinted.net/t/02_00255_tdWXTR8jfyzPyoQ5M7CAeMFp/20x20/1724482008.webp?s=af5086ddc8ccde8bc85264e9919c9b1a4f67acee",
+                        "width": 20,
+                        "height": 20,
+                        "original_size": null
+                    }
+                ],
+                "is_suspicious": false,
+                "orientation": null,
+                "high_resolution": {
+                    "id": "02_00255_tdWXTR8jfyzPyoQ5M7CAeMFp",
+                    "timestamp": 1724482008,
+                    "orientation": null
+                },
+                "full_size_url": "https://images1.vinted.net/tc/02_00255_tdWXTR8jfyzPyoQ5M7CAeMFp/1724482008.webp?s=633e985e996ba462ae52c04e4b895174502aa2fa",
+                "is_hidden": false,
+                "extra": {}
+            },
+            "is_moderator": false,
+            "is_user_unblockable": false,
+            "last_logged_in_at": "2026-04-10T10:09:04+02:00"
+        },
+        "education": null,
+        "moderated_items": null,
+        "user_has_support_role": false,
+        "safety_education": false,
+        "conversation_url": "https://www.vinted.fr/inbox/19229302925",
+        "seller_discovery_notes": [],
+        "order_details_variant": null,
+        "germany_banner_metadata": null
     },
-    "opposite_user": {
-      "id": 14006252,
-      "login": "nathala7",
-      "is_system": false,
-      "review_count": 24,
-      "feedback_reputation": 0.96,
-      "is_hated": false,
-      "profile_url": "https://www.vinted.fr/member/14006252",
-      "location_description": "France, Nailloux",
-      "country_code": "FR",
-      "is_on_holiday": false,
-      "photo": null,
-      "is_moderator": false,
-      "is_user_unblockable": false,
-      "last_logged_in_at": "2026-04-19T21:01:01+02:00"
-    },
-    "education": null,
-    "moderated_items": null,
-    "user_has_support_role": false,
-    "safety_education": false,
-    "conversation_url": "https://www.vinted.fr/inbox/21160542503",
-    "seller_discovery_notes": [],
-    "order_details_variant": null,
-    "germany_banner_metadata": null
-  },
-  "code": 0
+    "code": 0
 }
