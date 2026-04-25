@@ -527,31 +527,32 @@ function PendingOfferActions({ conversation, accountId, conversationId, currentU
     );
   }
 
-  // Chercher la dernière offre avec current: true
-  let pendingOffer = null;
+  // Chercher la dernière offre current (peu importe le statut)
+  const TERMINAL_STATUSES = ["Refusée", "Annulée", "Acceptée", "Expirée"];
+  let lastCurrentOffer = null;
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
     const isOfferType = msg.entity_type === "offer_request_message" || msg.entity_type === "offer_message";
-    const isCurrent = msg.entity?.current === true;
-
-    if (isOfferType && isCurrent) {
-      pendingOffer = msg;
+    if (isOfferType && msg.entity?.current === true) {
+      lastCurrentOffer = msg;
       break;
     }
   }
 
-  if (!pendingOffer || !transaction) return null;
+  if (!lastCurrentOffer || !transaction) return null;
 
-  const isFromOther = String(pendingOffer.entity?.user_id) !== String(currentUserId);
-  const offerPrice = pendingOffer.entity?.price?.amount
-    ? parseFloat(pendingOffer.entity.price.amount)
+  const isTerminal = TERMINAL_STATUSES.includes(lastCurrentOffer.entity?.status_title);
+  // Si la dernière offre current est terminale → plus rien à faire
+  if (isTerminal) return null;
+
+  const isFromOther = String(lastCurrentOffer.entity?.user_id) !== String(currentUserId);
+  const offerPrice = lastCurrentOffer.entity?.price?.amount
+    ? parseFloat(lastCurrentOffer.entity.price.amount)
     : null;
-  const offerLabel = pendingOffer.entity?.price_label || `${offerPrice} €`;
+  const offerLabel = lastCurrentOffer.entity?.price_label || `${offerPrice} €`;
+  const offerId = lastCurrentOffer.entity?.offer_request_id || lastCurrentOffer.id;
 
-  // L'offer_id est dans offer_request_id pour offer_request_message, ou dans l'id du message
-  const offerId = pendingOffer.entity?.offer_request_id || pendingOffer.id;
-
-  // Si c'est l'offre du user, afficher un message d'attente
+  // Si c'est notre offre qui attend une réponse
   if (!isFromOther) {
     return (
       <div className="px-5 py-3 border-t border-border shrink-0 bg-muted/20">
