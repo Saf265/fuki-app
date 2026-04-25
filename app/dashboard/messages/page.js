@@ -569,15 +569,15 @@ function PendingOfferActions({ conversation, accountId, conversationId, currentU
   const handleAccept = async () => {
     setIsProcessing(true);
     try {
-      const res = await fetch(`/api/messages/${conversationId}/accept-offer`, {
+      const payload = { accountId, transaction_id: transaction.id, offer_id: offerId };
+      const url = `/api/messages/${conversationId}/accept-offer`;
+      console.log("📤 [accept-offer] URL:", url, "| Body:", payload);
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accountId,
-          transaction_id: transaction.id,
-          offer_id: offerId,
-        }),
+        body: JSON.stringify(payload),
       });
+      console.log("📥 [accept-offer] Status:", res.status);
       if (!res.ok) throw new Error("Erreur lors de l'acceptation");
       console.log("✅ Offre acceptée");
 
@@ -602,15 +602,15 @@ function PendingOfferActions({ conversation, accountId, conversationId, currentU
   const handleReject = async () => {
     setIsProcessing(true);
     try {
-      const res = await fetch(`/api/messages/${conversationId}/reject-offer`, {
+      const payload = { accountId, transaction_id: transaction.id, offer_id: offerId };
+      const url = `/api/messages/${conversationId}/reject-offer`;
+      console.log("📤 [reject-offer] URL:", url, "| Body:", payload);
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accountId,
-          transaction_id: transaction.id,
-          offer_id: offerId,
-        }),
+        body: JSON.stringify(payload),
       });
+      console.log("📥 [reject-offer] Status:", res.status);
       if (!res.ok) throw new Error("Erreur lors du refus");
       console.log("✅ Offre refusée");
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { signOut, useSession } from "@/src/lib/auth-client";
 import {
   ArrowRight,
   ChevronLeft,
@@ -7,8 +8,10 @@ import {
   LayoutDashboard,
   Link2,
   Loader2,
+  LogOut,
   MessageSquare,
   ShoppingBag,
+  Sparkles,
   Store,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -111,6 +114,8 @@ function StatCard({ label, value, icon }) {
 
 export function Sidebar({ active }) {
   const [collapsed, setCollapsed] = useState(false);
+  const { data } = useSession();
+  const user = data?.user;
 
   // Restore persisted state on mount
   useEffect(() => {
@@ -138,6 +143,13 @@ export function Sidebar({ active }) {
   };
 
   const links = [
+    {
+      id: "publish",
+      label: "Publier avec l'IA",
+      icon: <Sparkles size={18} />,
+      href: "/dashboard/publish",
+      primary: true,
+    },
     {
       id: "dashboard",
       label: "Tableau de bord",
@@ -198,14 +210,16 @@ export function Sidebar({ active }) {
             title={collapsed ? link.label : undefined}
             className={`group flex items-center w-full py-2.5 rounded-lg text-sm font-medium transition-all duration-150 relative
               ${collapsed ? "justify-center px-0" : "px-3 gap-3"}
-              ${active === link.id
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+              ${link.primary
+                ? active === link.id
+                  ? "bg-primary text-white shadow-sm shadow-primary/30"
+                  : "bg-primary/10 text-primary hover:bg-primary hover:text-white hover:shadow-sm hover:shadow-primary/30"
+                : active === link.id
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               }`}
           >
-            <span
-              className={`flex-shrink-0 transition-transform duration-200 ${active !== link.id ? "group-hover:scale-110" : ""}`}
-            >
+            <span className="shrink-0 transition-transform duration-200 group-hover:scale-110">
               {link.icon}
             </span>
             {!collapsed && (
@@ -217,12 +231,41 @@ export function Sidebar({ active }) {
         ))}
       </nav>
 
-      {/* Footer / Info */}
-      {!collapsed && (
-        <div className="p-6 text-center">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Fuki v1.0.0</p>
-        </div>
-      )}
+      {/* Footer — user info */}
+      <div className={`border-t border-border ${collapsed ? "p-3" : "p-4"}`}>
+        {collapsed ? (
+          <div className="flex justify-center">
+            {user?.image ? (
+              <img src={user.image} alt="" className="w-8 h-8 rounded-full object-cover border border-border" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-primary/10 border border-border flex items-center justify-center text-xs font-bold text-primary">
+                {user?.name?.[0]?.toUpperCase() ?? "?"}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            {user?.image ? (
+              <img src={user.image} alt="" className="w-9 h-9 rounded-full object-cover border border-border shrink-0" />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-primary/10 border border-border flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                {user?.name?.[0]?.toUpperCase() ?? "?"}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold truncate">{user?.name ?? "—"}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email ?? "—"}</p>
+            </div>
+            <button
+              onClick={() => signOut()}
+              title="Se déconnecter"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors shrink-0"
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

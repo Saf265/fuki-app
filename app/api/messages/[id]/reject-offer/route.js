@@ -63,14 +63,14 @@ export async function POST(request, { params }) {
       conversation_id: conversationId,
     });
 
-    const params = new URLSearchParams({
+    const queryParams = new URLSearchParams({
       transaction_id: transaction_id.toString(),
       offer_id: offer_id.toString(),
       accept: "false",
       conversation_id: conversationId.toString(),
     });
 
-    const url = `${VINTED_API_URL}/api/accept-reject-offer?${params}`;
+    const url = `${VINTED_API_URL}/api/accept-reject-offer?${queryParams}`;
 
     const res = await fetch(url, {
       method: "POST",
