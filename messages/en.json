@@ -45,6 +45,7 @@
       "category": "Category",
       "size": "Size",
       "colors": "Colors",
+      "price": "Price",
       "parcel_size": "Parcel size",
       "isbn": "ISBN"
     },

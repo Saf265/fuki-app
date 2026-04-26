@@ -45,6 +45,7 @@
       "category": "Catégorie",
       "size": "Taille",
       "colors": "Couleurs",
+      "price": "Prix",
       "parcel_size": "Taille du colis",
       "isbn": "ISBN"
     },

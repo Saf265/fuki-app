@@ -94,6 +94,7 @@ export default function Publish() {
         colors: Array.isArray(data.colors) ? data.colors.join(", ") : (data.colors ?? ""),
         parcel_size: data.parcel_size ?? "",
         isbn: data.isbn ?? "",
+        price: "",
       });
     } catch (err) {
       setError(err.message);
@@ -300,15 +301,32 @@ export default function Publish() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">{t("fields.parcel_size")}</label>
-                  <PackageSizeSelect
-                    parcelSizeId={hiddenFields.parcel_size_id}
-                    onChange={({ label, id }) => {
-                      updateField("parcel_size", label);
-                      setHiddenFields((prev) => ({ ...prev, parcel_size_id: id }));
-                    }}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">{t("fields.price")}</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={form.price}
+                        onChange={(e) => updateField("price", e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-muted/40 border border-border rounded-xl pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">€</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">{t("fields.parcel_size")}</label>
+                    <PackageSizeSelect
+                      parcelSizeId={hiddenFields.parcel_size_id}
+                      onChange={({ label, id }) => {
+                        updateField("parcel_size", label);
+                        setHiddenFields((prev) => ({ ...prev, parcel_size_id: id }));
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {form.isbn && (
