@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1",
+    "label": "New without tags",
+    "type": "default"
+  },
+  {
+    "id": "2",
+    "label": "Very good",
+    "type": "default"
+  },
+  {
+    "id": "3",
+    "label": "Good",
+    "type": "default"
+  },
+  {
+    "id": "6",
+    "label": "New with tags",
+    "type": "default"
+  }
+]
