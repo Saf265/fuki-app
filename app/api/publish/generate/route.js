@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
-    const { image_urls } = await request.json();
+    const { image_urls, lang = "fr" } = await request.json();
 
     if (!image_urls?.length) {
       return NextResponse.json({ error: "Aucune image fournie" }, { status: 400 });
@@ -11,7 +11,7 @@ export async function POST(request) {
     const res = await fetch(`${process.env.VINTED_API_URL}/test-generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image_urls, lang: "fr" }),
+      body: JSON.stringify({ image_urls, lang }),
     });
 
     if (!res.ok) {

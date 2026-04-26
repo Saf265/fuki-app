@@ -105,12 +105,12 @@ export default function ColorSelect({ colorIds = [], onChange }) {
               >
                 <ColorSwatch hex={c.hex} size={12} />
                 {c.label}
-                <button
+                <span
                   onClick={(e) => remove(c.id, e)}
-                  className="text-muted-foreground hover:text-foreground transition-colors ml-0.5"
+                  className="text-muted-foreground hover:text-foreground transition-colors ml-0.5 cursor-pointer"
                 >
                   <X size={10} />
-                </button>
+                </span>
               </span>
             ))}
           </>

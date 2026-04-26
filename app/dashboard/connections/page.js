@@ -11,11 +11,13 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Sidebar } from "../page";
 
 export default function Connections() {
+  const t = useTranslations("connections");
   const [accounts, setAccounts] = useState({ vinted: [], ebay: [] });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPlatform, setCurrentPlatform] = useState(null);
@@ -48,10 +50,10 @@ export default function Connections() {
       setIsConnecting(false);
       setIsPolling(true);
       setPollCount(0);
-      toast.success("Vinted ouvert — connectez-vous puis revenez ici.");
+      toast.success(t("toast.vinted_opened"));
     } catch (err) {
       setIsConnecting(false);
-      toast.error("Impossible de générer le token. Réessayez.");
+      toast.error(t("toast.token_error"));
     }
   };
 
@@ -91,12 +93,12 @@ export default function Connections() {
         if (newAccounts && newAccounts.vinted.length > initialCount) {
           setIsPolling(false);
           setIsModalOpen(false);
-          toast.success("Compte Vinted connecté !");
+          toast.success(t("toast.connected", { platform: "Vinted" }));
           clearInterval(interval);
         }
         if (pollCount > 40) {
           setIsPolling(false);
-          toast.error("Délai dépassé. Réessayez.");
+          toast.error(t("toast.timeout"));
           clearInterval(interval);
         }
       }, 3000);
@@ -118,10 +120,10 @@ export default function Connections() {
           ...prev,
           [accountToDelete.platform]: prev[accountToDelete.platform].filter((a) => a.id !== accountToDelete.id),
         }));
-        toast.success("Compte déconnecté");
+        toast.success(t("toast.disconnected"));
       }
     } catch {
-      toast.error("Erreur lors de la suppression");
+      toast.error(t("toast.delete_error"));
     } finally {
       setIsDeleteModalOpen(false);
       setAccountToDelete(null);
@@ -143,9 +145,9 @@ export default function Connections() {
             <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
               <Link2 size={14} className="text-primary" />
             </div>
-            <h1 className="text-xl font-semibold tracking-tight">Connexions</h1>
+            <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
           </div>
-          <p className="text-muted-foreground text-sm ml-10">Gérez vos comptes marchands Vinted et eBay.</p>
+          <p className="text-muted-foreground text-sm ml-10">{t("subtitle")}</p>
         </div>
 
         <div className="p-10">
@@ -153,7 +155,7 @@ export default function Connections() {
             <div className="flex items-center gap-2.5 text-sm">
               <div className={`w-2 h-2 rounded-full ${totalAccounts > 0 ? "bg-primary" : "bg-muted-foreground/30"}`} />
               <span className="font-semibold text-foreground">{totalAccounts}</span>
-              <span className="text-muted-foreground">compte{totalAccounts !== 1 ? "s" : ""} connecté{totalAccounts !== 1 ? "s" : ""}</span>
+              <span className="text-muted-foreground">{totalAccounts !== 1 ? t("accounts_connected_plural") : t("accounts_connected")}</span>
             </div>
             <div className="h-5 w-px bg-border" />
             <div className="flex items-center gap-3">
@@ -171,21 +173,23 @@ export default function Connections() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <PlatformSection
               platform="vinted"
-              label="Vinted"
+              label={t("vinted")}
               icon={<ShoppingBag size={18} />}
-              description="Vendez vos articles sur Vinted"
+              description={t("vinted_desc")}
               accounts={accounts.vinted}
               onAdd={() => openModal("vinted")}
               onRemove={(id) => removeAccount({ id, platform: "vinted" })}
+              t={t}
             />
             <PlatformSection
               platform="ebay"
-              label="eBay"
+              label={t("ebay")}
               icon={<Store size={18} />}
-              description="Vendez vos articles sur eBay"
+              description={t("ebay_desc")}
               accounts={accounts.ebay}
               onAdd={() => openModal("ebay")}
               onRemove={(id) => removeAccount({ id, platform: "ebay" })}
+              t={t}
             />
           </div>
         </div>
@@ -203,10 +207,10 @@ export default function Connections() {
                 </div>
                 <div>
                   <p className="font-semibold">
-                    Connecter {currentPlatform === "vinted" ? "Vinted" : "eBay"}
+                    {currentPlatform === "vinted" ? t("modal.connect_vinted") : t("modal.connect_ebay")}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {currentPlatform === "vinted" ? "Via l'extension Fuki" : "Connexion sécurisée en quelques secondes"}
+                    {currentPlatform === "vinted" ? t("modal.vinted_subtitle") : t("modal.ebay_subtitle")}
                   </p>
                 </div>
               </div>
@@ -225,9 +229,9 @@ export default function Connections() {
                     <Loader2 size={26} className="text-primary animate-spin" />
                   </div>
                   <div>
-                    <p className="font-semibold">En attente de connexion</p>
+                    <p className="font-semibold">{t("modal.waiting")}</p>
                     <p className="text-sm text-muted-foreground mt-1.5 max-w-xs">
-                      Connectez-vous sur Vinted dans l'onglet ouvert, puis revenez ici. Fuki détectera la connexion automatiquement.
+                      {t("modal.waiting_desc")}
                     </p>
                   </div>
                   <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
@@ -240,15 +244,13 @@ export default function Connections() {
                     onClick={() => { setIsPolling(false); setIsModalOpen(false); }}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    Annuler
+                    {t("modal.cancel")}
                   </button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {currentPlatform === "vinted"
-                      ? "Vinted va s'ouvrir dans un nouvel onglet. Connectez-vous à votre compte et l'extension Fuki synchronisera tout automatiquement."
-                      : "Vous allez être redirigé vers eBay pour connecter votre boutique en toute sécurité."}
+                    {currentPlatform === "vinted" ? t("modal.vinted_desc") : t("modal.ebay_desc")}
                   </p>
 
                   {currentPlatform === "vinted" ? (
@@ -262,7 +264,7 @@ export default function Connections() {
                       ) : (
                         <>
                           <ExternalLink size={16} />
-                          Ouvrir Vinted
+                          {t("modal.open_vinted")}
                         </>
                       )}
                     </button>
@@ -272,12 +274,12 @@ export default function Connections() {
                       disabled={isConnecting}
                       className="mt-1 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-60"
                     >
-                      {isConnecting ? <Loader2 size={17} className="animate-spin" /> : "Connecter mon compte eBay"}
+                      {isConnecting ? <Loader2 size={17} className="animate-spin" /> : t("modal.connect_ebay_btn")}
                     </button>
                   )}
 
                   <button onClick={closeModal} className="text-sm text-center text-muted-foreground hover:text-foreground transition-colors py-1">
-                    Annuler
+                    {t("modal.cancel")}
                   </button>
                 </div>
               )}
@@ -295,26 +297,26 @@ export default function Connections() {
                 <AlertTriangle size={18} className="text-red-500" />
               </div>
               <div>
-                <p className="font-semibold">Déconnecter le compte ?</p>
-                <p className="text-sm text-muted-foreground">Cette action est irréversible</p>
+                <p className="font-semibold">{t("delete.title")}</p>
+                <p className="text-sm text-muted-foreground">{t("delete.subtitle")}</p>
               </div>
             </div>
             <div className="px-7 py-6">
               <p className="text-sm text-muted-foreground mb-6">
-                Le compte <span className="font-medium text-foreground capitalize">{accountToDelete?.platform}</span> sera retiré de Fuki. Vous pourrez le reconnecter à tout moment.
+                <span className="font-medium text-foreground capitalize">{accountToDelete?.platform}</span> {t("delete.description")}
               </p>
               <div className="flex flex-col gap-2">
                 <button
                   onClick={confirmDelete}
                   className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
                 >
-                  Déconnecter
+                  {t("delete.confirm")}
                 </button>
                 <button
                   onClick={() => setIsDeleteModalOpen(false)}
                   className="w-full py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Annuler
+                  {t("delete.cancel")}
                 </button>
               </div>
             </div>
@@ -325,7 +327,7 @@ export default function Connections() {
   );
 }
 
-function PlatformSection({ label, icon, description, accounts, onAdd, onRemove }) {
+function PlatformSection({ label, icon, description, accounts, onAdd, onRemove, t }) {
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       <div className="flex items-center justify-between px-6 py-5 border-b border-border">
@@ -342,13 +344,13 @@ function PlatformSection({ label, icon, description, accounts, onAdd, onRemove }
           onClick={onAdd}
           className="flex items-center gap-1.5 text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-lg transition-colors"
         >
-          <Plus size={13} /> Ajouter
+          <Plus size={13} /> {t("add")}
         </button>
       </div>
       <div>
         {accounts.length === 0 ? (
           <div className="py-12 text-center text-sm text-muted-foreground">
-            Aucun compte connecté
+            {t("no_accounts")}
           </div>
         ) : (
           <ul>
@@ -364,7 +366,7 @@ function PlatformSection({ label, icon, description, accounts, onAdd, onRemove }
                   </div>
                   <div>
                     <p className="text-sm font-medium">{account.username}</p>
-                    <p className="text-xs text-muted-foreground">Connecté le {account.connectedAt}</p>
+                    <p className="text-xs text-muted-foreground">{t("connected_on")} {account.connectedAt}</p>
                   </div>
                 </div>
                 <button

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const R2_BASE = process.env.CLOUDFLARE_R2_PUBLIC_URL;
+const R2_BASE = "https://pub-447d488e350b4fd987abb56665618bf9.r2.dev/datasets-vinted";
 
 // Cache en mémoire (1h)
 let cache = null;
@@ -10,7 +10,7 @@ const CACHE_TTL = 1000 * 60 * 60;
 async function getBrands() {
   if (cache && Date.now() - cacheTimestamp < CACHE_TTL) return cache;
 
-  const res = await fetch(`${R2_BASE}/data/brands.json`);
+  const res = await fetch(`${R2_BASE}/brands.json`);
   if (!res.ok) throw new Error(`R2 fetch failed: ${res.status}`);
 
   const data = await res.json();

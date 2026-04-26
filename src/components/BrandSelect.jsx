@@ -12,24 +12,28 @@ export default function BrandSelect({ brandId, onChange }) {
   const ref = useRef(null);
   const debounceTimer = useRef(null);
 
+  // Charger immédiatement pour résoudre brandId rapidement
+  useEffect(() => {
+    fetchBrands("");
+  }, []);
+
   // Résoudre le label de la marque pré-sélectionnée via brandId
   useEffect(() => {
-    if (!brandId) return;
-    fetch(`/api/brands/search?limit=2000`)
-      .then((r) => r.json())
-      .then((data) => {
-        const found = data.brands?.find((b) => b.id === String(brandId));
-        if (found) setSelected(found);
-      })
-      .catch(console.error);
-  }, [brandId]);
-
-  // Charger les 50 premières à l'ouverture
-  useEffect(() => {
-    if (!open) return;
-    if (brands.length > 0 && !search) return;
-    fetchBrands(search);
-  }, [open]);
+    if (!brandId || !brands.length) return;
+    const found = brands.find((b) => b.id === String(brandId));
+    if (found) {
+      setSelected(found);
+    } else {
+      // Si pas trouvé dans les 50 premiers, fetch avec plus de résultats
+      fetch(`/api/brands/search?limit=2000`)
+        .then((r) => r.json())
+        .then((data) => {
+          const found = data.brands?.find((b) => b.id === String(brandId));
+          if (found) setSelected(found);
+        })
+        .catch(console.error);
+    }
+  }, [brandId, brands]);
 
   // Debounce sur la recherche
   useEffect(() => {

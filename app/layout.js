@@ -1,3 +1,5 @@
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -12,12 +14,17 @@ export const metadata = {
   description: "The ultimate automation tool for Vinted and eBay sellers.",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    <html lang={locale} className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
-        {children}
-        <Toaster richColors position="bottom-right" />
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          {children}
+          <Toaster richColors position="bottom-right" />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

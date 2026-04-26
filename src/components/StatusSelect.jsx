@@ -5,25 +5,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function StatusSelect({ statusId, onChange }) {
   const [open, setOpen] = useState(false);
-  const [statuses, setStatuses] = useState(null);
+  const [statuses, setStatuses] = useState([]);
   const ref = useRef(null);
 
   useEffect(() => {
-    fetch("/api/data/statutuses.json")
+    fetch("/api/data/statuses.json")
       .then((r) => r.json())
       .then((data) => {
-        // Gérer array ou objet
-        if (Array.isArray(data)) {
-          setStatuses(data);
-        } else {
-          setStatuses(Object.entries(data).map(([label, id]) => ({ id: String(id), label })));
-        }
+        // data est un array: [{ id, label, type }, ...]
+        setStatuses(Array.isArray(data) ? data : []);
       })
       .catch(console.error);
   }, []);
 
   const selected = useMemo(
-    () => statuses?.find((s) => s.id === String(statusId)) ?? null,
+    () => statuses.find((s) => String(s.id) === String(statusId)) ?? null,
     [statusId, statuses]
   );
 
@@ -36,11 +32,13 @@ export default function StatusSelect({ statusId, onChange }) {
   }, []);
 
   const select = (status) => {
-    onChange({ label: status.label, id: status.id });
+    onChange({ label: status.label, id: String(status.id) });
     setOpen(false);
   };
 
-  if (!statuses) return <div className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm text-muted-foreground">Chargement...</div>;
+  if (statuses.length === 0) {
+    return <div className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm text-muted-foreground">Chargement...</div>;
+  }
 
   return (
     <div ref={ref} className="relative">
@@ -63,7 +61,7 @@ export default function StatusSelect({ statusId, onChange }) {
                 key={status.id}
                 onClick={() => select(status)}
                 className={`px-4 py-2 text-sm cursor-pointer transition-colors
-                  ${status.id === String(statusId) ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/60"}`}
+                  ${String(status.id) === String(statusId) ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/60"}`}
               >
                 {status.label}
               </li>

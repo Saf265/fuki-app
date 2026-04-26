@@ -1,16 +1,21 @@
 "use client";
 
 import BrandSelect from "@/components/BrandSelect";
+import CategorySelect from "@/components/CategorySelect";
+import ColorSelect from "@/components/ColorSelect";
+import PackageSizeSelect from "@/components/PackageSizeSelect";
 import SizeSelect from "@/components/SizeSelect";
 import StatusSelect from "@/components/StatusSelect";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { Sidebar } from "../page";
-import ColorSelect from "@/components/ColorSelect";
 
 const MAX_IMAGES = 6;
 
 export default function Publish() {
+  const t = useTranslations("publish");
+  const locale = useLocale();
   const [images, setImages] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -65,7 +70,7 @@ export default function Publish() {
       const genRes = await fetch("/api/publish/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image_urls: urls }),
+        body: JSON.stringify({ image_urls: urls, lang: locale }),
       });
       if (!genRes.ok) throw new Error("Erreur lors de la génération");
       const data = await genRes.json();
@@ -77,6 +82,7 @@ export default function Publish() {
         size_id: String(data.size_id ?? ""),
         status_id: String(data.status_id ?? ""),
         color_ids: Array.isArray(data.color_ids) ? data.color_ids.map(String) : [],
+        parcel_size_id: data.parcel_size_id ? Number(data.parcel_size_id) : null,
       });
       setForm({
         title: data.title ?? "",
@@ -112,11 +118,9 @@ export default function Publish() {
             <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
               <Sparkles size={14} className="text-primary" />
             </div>
-            <h1 className="text-xl font-semibold tracking-tight">Publier avec l'IA</h1>
+            <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
           </div>
-          <p className="text-muted-foreground text-sm ml-10">
-            Ajoutez jusqu'à 6 photos de votre article, l'IA s'occupe du reste.
-          </p>
+          <p className="text-muted-foreground text-sm ml-10">{t("subtitle")}</p>
         </div>
 
         {!form ? (
@@ -124,12 +128,12 @@ export default function Publish() {
           <div className="flex-1 flex items-center justify-center p-10">
             <div className="w-full max-w-lg flex flex-col gap-5">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">Photos du produit</p>
+                <p className="text-sm font-semibold">{t("photos")}</p>
                 <span className="text-xs text-muted-foreground tabular-nums">{images.length} / {MAX_IMAGES}</span>
               </div>
 
               {images.length === 0 ? (
-                <Dropzone onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave} isDragging={isDragging} onFiles={handleFiles} />
+                <Dropzone onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave} isDragging={isDragging} onFiles={handleFiles} t={t} />
               ) : (
                 <div className="grid grid-cols-3 gap-3">
                   {images.map((img, i) => (
@@ -137,7 +141,7 @@ export default function Publish() {
                       <img src={img.preview} alt="" className="w-full h-full object-cover" />
                       {i === 0 && (
                         <span className="absolute bottom-2 left-2 text-[10px] font-bold bg-black/50 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
-                          Principale
+                          {t("main_photo")}
                         </span>
                       )}
                       <button
@@ -156,7 +160,7 @@ export default function Publish() {
                     >
                       <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
                       <ImagePlus size={18} className="text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">Ajouter</p>
+                      <p className="text-xs text-muted-foreground">{t("add")}</p>
                     </label>
                   )}
                 </div>
@@ -171,7 +175,7 @@ export default function Publish() {
                   className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-primary/20"
                 >
                   {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                  {loading ? "Génération en cours…" : "Générer ma publication"}
+                  {loading ? t("generating") : t("generate")}
                 </button>
               )}
             </div>
@@ -212,7 +216,7 @@ export default function Publish() {
 
               {generatedCovers.length > 0 && (
                 <>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-2">Visuels générés</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-2">{t("generated_covers")}</p>
                   <div className="grid grid-cols-3 gap-2">
                     {generatedCovers.map((url, i) => (
                       <div key={i} className="aspect-square rounded-lg overflow-hidden border border-border">
@@ -227,21 +231,21 @@ export default function Publish() {
                 onClick={() => { setForm(null); setGeneratedCovers([]); }}
                 className="mt-auto text-xs text-muted-foreground hover:text-foreground transition-colors text-center pt-2"
               >
-                ← Recommencer
+                {t("restart")}
               </button>
             </div>
 
             {/* Colonne droite : formulaire */}
             <div className="flex-1 overflow-y-auto p-8">
               <div className="max-w-xl flex flex-col gap-5">
-                <p className="text-sm font-semibold">Détails de l'annonce</p>
+                <p className="text-sm font-semibold">{t("listing_details")}</p>
 
-                <FormField label="Titre" value={form.title} onChange={(v) => updateField("title", v)} />
-                <FormField label="Description" value={form.description} onChange={(v) => updateField("description", v)} multiline />
+                <FormField label={t("fields.title")} value={form.title} onChange={(v) => updateField("title", v)} />
+                <FormField label={t("fields.description")} value={form.description} onChange={(v) => updateField("description", v)} multiline />
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">Marque</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t("fields.brand")}</label>
                     <BrandSelect
                       brandId={hiddenFields.brand_id}
                       onChange={({ label, id }) => {
@@ -251,7 +255,7 @@ export default function Publish() {
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">État</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t("fields.condition")}</label>
                     <StatusSelect
                       statusId={hiddenFields.status_id}
                       onChange={({ label, id }) => {
@@ -262,11 +266,20 @@ export default function Publish() {
                   </div>
                 </div>
 
-                <FormField label="Catégorie" value={form.category_path} onChange={(v) => updateField("category_path", v)} />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">{t("fields.category")}</label>
+                  <CategorySelect
+                    categoryId={hiddenFields.category_id ? Number(hiddenFields.category_id) : null}
+                    onChange={({ path, id }) => {
+                      updateField("category_path", path);
+                      setHiddenFields((prev) => ({ ...prev, category_id: String(id) }));
+                    }}
+                  />
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">Taille</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t("fields.size")}</label>
                     <SizeSelect
                       sizeId={hiddenFields.size_id ? Number(hiddenFields.size_id) : null}
                       onChange={({ label, id }) => {
@@ -276,7 +289,7 @@ export default function Publish() {
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">Couleurs</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t("fields.colors")}</label>
                     <ColorSelect
                       colorIds={hiddenFields.color_ids ?? []}
                       onChange={(colors) => {
@@ -287,15 +300,24 @@ export default function Publish() {
                   </div>
                 </div>
 
-                <FormField label="Taille du colis" value={form.parcel_size} onChange={(v) => updateField("parcel_size", v)} />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">{t("fields.parcel_size")}</label>
+                  <PackageSizeSelect
+                    parcelSizeId={hiddenFields.parcel_size_id}
+                    onChange={({ label, id }) => {
+                      updateField("parcel_size", label);
+                      setHiddenFields((prev) => ({ ...prev, parcel_size_id: id }));
+                    }}
+                  />
+                </div>
 
                 {form.isbn && (
-                  <FormField label="ISBN" value={form.isbn} onChange={(v) => updateField("isbn", v)} />
+                  <FormField label={t("fields.isbn")} value={form.isbn} onChange={(v) => updateField("isbn", v)} />
                 )}
 
                 <button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-primary/20 mt-2">
                   <Sparkles size={16} />
-                  Publier l'annonce
+                  {t("publish_btn")}
                 </button>
               </div>
             </div>
@@ -306,7 +328,7 @@ export default function Publish() {
   );
 }
 
-function Dropzone({ onDrop, onDragOver, onDragLeave, isDragging, onFiles }) {
+function Dropzone({ onDrop, onDragOver, onDragLeave, isDragging, onFiles, t }) {
   return (
     <label
       onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}
@@ -319,9 +341,9 @@ function Dropzone({ onDrop, onDragOver, onDragLeave, isDragging, onFiles }) {
       </div>
       <div className="text-center">
         <p className="text-sm font-semibold">
-          {isDragging ? "Déposez vos photos ici" : "Glissez vos photos ou cliquez pour choisir"}
+          {isDragging ? t.dropzone_active : t.dropzone}
         </p>
-        <p className="text-xs text-muted-foreground mt-1.5">Jusqu'à 6 images · PNG, JPG, WEBP</p>
+        <p className="text-xs text-muted-foreground mt-1.5">{t.dropzone_hint}</p>
       </div>
     </label>
   );
@@ -339,3 +361,4 @@ function FormField({ label, value, onChange, multiline = false }) {
     </div>
   );
 }
+

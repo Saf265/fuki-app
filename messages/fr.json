@@ -1,0 +1,107 @@
+{
+  "sidebar": {
+    "publish": "Publier avec l'IA",
+    "dashboard": "Tableau de bord",
+    "messages": "Messagerie",
+    "connections": "Connexions",
+    "logout": "Se déconnecter",
+    "collapse": "Réduire le menu",
+    "expand": "Ouvrir le menu"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "subtitle": "Bienvenue sur Fuki.",
+    "stats": {
+      "connected": "Comptes connectés",
+      "ebay": "eBay connectés",
+      "vinted": "Vinted connectés"
+    },
+    "cta": {
+      "title": "Commencer à automatiser",
+      "description": "Connectez vos comptes Vinted et eBay pour démarrer l'automatisation de vos annonces.",
+      "button": "Connecter un compte"
+    }
+  },
+  "publish": {
+    "title": "Publier avec l'IA",
+    "subtitle": "Ajoutez jusqu'à 6 photos de votre article, l'IA s'occupe du reste.",
+    "photos": "Photos du produit",
+    "dropzone": "Glissez vos photos ou cliquez pour choisir",
+    "dropzone_active": "Déposez vos photos ici",
+    "dropzone_hint": "Jusqu'à 6 images · PNG, JPG, WEBP",
+    "add": "Ajouter",
+    "main_photo": "Principale",
+    "generate": "Générer ma publication",
+    "generating": "Génération en cours…",
+    "generated_covers": "Visuels générés",
+    "restart": "← Recommencer",
+    "listing_details": "Détails de l'annonce",
+    "publish_btn": "Publier l'annonce",
+    "fields": {
+      "title": "Titre",
+      "description": "Description",
+      "brand": "Marque",
+      "condition": "État",
+      "category": "Catégorie",
+      "size": "Taille",
+      "colors": "Couleurs",
+      "parcel_size": "Taille du colis",
+      "isbn": "ISBN"
+    },
+    "placeholders": {
+      "brand": "Sélectionner une marque…",
+      "brand_search": "Rechercher une marque…",
+      "condition": "Sélectionner un état…",
+      "size": "Sélectionner une taille…",
+      "size_search": "Rechercher…",
+      "colors": "Sélectionner des couleurs…"
+    },
+    "loading": "Chargement...",
+    "no_results": "Aucun résultat"
+  },
+  "connections": {
+    "title": "Connexions",
+    "subtitle": "Gérez vos comptes marchands Vinted et eBay.",
+    "accounts_connected": "compte connecté",
+    "accounts_connected_plural": "comptes connectés",
+    "vinted": "Vinted",
+    "ebay": "eBay",
+    "vinted_desc": "Vendez vos articles sur Vinted",
+    "ebay_desc": "Vendez vos articles sur eBay",
+    "add": "Ajouter",
+    "no_accounts": "Aucun compte connecté",
+    "connected_on": "Connecté le",
+    "modal": {
+      "connect_vinted": "Connecter Vinted",
+      "connect_ebay": "Connecter eBay",
+      "vinted_subtitle": "Via l'extension Fuki",
+      "ebay_subtitle": "Connexion sécurisée en quelques secondes",
+      "vinted_desc": "Vinted va s'ouvrir dans un nouvel onglet. Connectez-vous à votre compte et l'extension Fuki synchronisera tout automatiquement.",
+      "ebay_desc": "Vous allez être redirigé vers eBay pour connecter votre boutique en toute sécurité.",
+      "open_vinted": "Ouvrir Vinted",
+      "connect_ebay_btn": "Connecter mon compte eBay",
+      "cancel": "Annuler",
+      "waiting": "En attente de connexion",
+      "waiting_desc": "Connectez-vous sur Vinted dans l'onglet ouvert, puis revenez ici. Fuki détectera la connexion automatiquement."
+    },
+    "delete": {
+      "title": "Déconnecter le compte ?",
+      "subtitle": "Cette action est irréversible",
+      "description": "sera retiré de Fuki. Vous pourrez le reconnecter à tout moment.",
+      "confirm": "Déconnecter",
+      "cancel": "Annuler"
+    },
+    "toast": {
+      "vinted_opened": "Vinted ouvert — connectez-vous puis revenez ici.",
+      "token_error": "Impossible de générer le token. Réessayez.",
+      "connected": "Compte {platform} connecté !",
+      "timeout": "Délai dépassé. Réessayez.",
+      "disconnected": "Compte déconnecté",
+      "delete_error": "Erreur lors de la suppression"
+    }
+  },
+  "messages_page": {
+    "title": "Messagerie",
+    "subtitle": "Gérez vos messages."
+  }
+}
