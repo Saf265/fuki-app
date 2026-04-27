@@ -9,10 +9,6 @@ import { NextResponse } from "next/server";
 export async function GET(request) {
   // ─── 0. Get authenticated user ───────────────────────────────────────────
   const session = await auth.api.getSession({ headers: request.headers });
-  console.log("USER")
-  console.log("USER")
-  console.log("USER")
-  console.log("USER")
 
   if (!session?.user?.id) {
     return NextResponse.redirect(
@@ -64,14 +60,20 @@ export async function GET(request) {
   let platformUserId = null;
   let email = null;
 
+  console.log("=== eBay Identity API Call ===");
+  console.log("Access token (first 20 chars):", access_token?.substring(0, 20));
+  console.log("Scopes received:", scope);
 
   try {
     const userRes = await fetch("https://api.sandbox.ebay.com/commerce/identity/v1/user/", {
       headers: { Authorization: `Bearer ${access_token}` },
     });
+
+    console.log("Identity API status:", userRes.status);
+
     if (userRes.ok) {
       const userData = await userRes.json();
-      console.log("USER", userData)
+      console.log("Identity API response:", JSON.stringify(userData, null, 2));
 
       // Extract userId (always present in the response)
       platformUserId = userData.userId;
@@ -90,9 +92,14 @@ export async function GET(request) {
       } else {
         username = userData.username;
       }
+
+      console.log("Extracted:", { platformUserId, username, email });
+    } else {
+      const errorText = await userRes.text();
+      console.error("Identity API error response:", errorText);
     }
   } catch (e) {
-    console.warn("eBay identity fetch failed:", e.message);
+    console.error("eBay identity fetch exception:", e);
   }
 
   // ─── 3. Upsert connected account + ebay session ───────────────────────────
