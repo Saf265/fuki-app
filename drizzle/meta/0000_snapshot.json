@@ -1,5 +1,5 @@
 {
-  "id": "43bdbb37-f948-4aa2-bc23-bfd6996b36d7",
+  "id": "5d3508fc-1fe5-4e70-a070-95f9f6661a7b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -270,20 +270,32 @@
           "primaryKey": false,
           "notNull": false
         },
-        "refresh_token_expires_at": {
-          "name": "refresh_token_expires_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_agent": {
-          "name": "user_agent",
+        "scope": {
+          "name": "scope",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "scope": {
-          "name": "scope",
+        "payment_policy_id": {
+          "name": "payment_policy_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fulfillment_policy_id": {
+          "name": "fulfillment_policy_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "return_policy_id": {
+          "name": "return_policy_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "marketplace_id": {
+          "name": "marketplace_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false

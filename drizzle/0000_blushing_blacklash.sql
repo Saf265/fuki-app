@@ -31,9 +31,11 @@ CREATE TABLE "ebay_sessions" (
 	"access_token" text,
 	"refresh_token" text,
 	"access_token_expires_at" timestamp,
-	"refresh_token_expires_at" timestamp,
-	"user_agent" text,
 	"scope" text,
+	"payment_policy_id" text,
+	"fulfillment_policy_id" text,
+	"return_policy_id" text,
+	"marketplace_id" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "ebay_sessions_connected_account_id_unique" UNIQUE("connected_account_id")
