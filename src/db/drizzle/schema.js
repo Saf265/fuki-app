@@ -169,9 +169,11 @@ export const ebaySessions = pgTable(
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     accessTokenExpiresAt: timestamp("access_token_expires_at"),
-    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
-    userAgent: text("user_agent"),
     scope: text("scope"),
+    paymentPolicyId: text("payment_policy_id"),
+    fulfillmentPolicyId: text("fulfillment_policy_id"),
+    returnPolicyId: text("return_policy_id"),
+    marketplaceId: text("marketplace_id"),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

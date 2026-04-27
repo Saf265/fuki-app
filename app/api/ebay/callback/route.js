@@ -1,3 +1,4 @@
+import { fetchUserEbayPolicies, getUserMarketplace } from "@/lib/ebay/identity";
 import { db } from "@/src/db/drizzle/index";
 import { connectedAccounts, ebaySessions } from "@/src/db/drizzle/schema";
 import { auth } from "@/src/lib/auth";
@@ -56,7 +57,6 @@ export async function GET(request) {
   const { access_token, refresh_token, expires_in, scope } = await tokenRes.json();
 
   // ─── 2. Fetch seller identity ─────────────────────────────────────────────
-  let username = null;
   let platformUserId = null;
 
   console.log("=== eBay User Info Fetch ===");
@@ -86,16 +86,23 @@ export async function GET(request) {
       platformUserId = `sandbox_${Date.now()}`;
     }
 
-    // Use a generic username for sandbox (in production, you'll get real data from Identity API)
-    username = `eBay Sandbox User`;
 
-    console.log("Extracted:", { platformUserId, username });
+
   } catch (e) {
     console.error("eBay user info extraction exception:", e);
     // Fallback
-    username = "eBay Sandbox User";
     platformUserId = `sandbox_${Date.now()}`;
   }
+
+  const marketplaceId = await getUserMarketplace(access_token)
+  const policies = await fetchUserEbayPolicies(access_token, marketplaceId)
+  const username = marketplaceId.username
+
+  console.log("=== eBay Account Info ===");
+  console.log("Platform User ID:", platformUserId);
+  console.log("Username:", username);
+  console.log("Marketplace ID:", marketplaceId);
+  console.log("Policies:", policies);
 
   // ─── 3. Upsert connected account + ebay session ───────────────────────────
   const accessTokenExpiresAt = new Date(Date.now() + expires_in * 1000);
@@ -113,6 +120,7 @@ export async function GET(request) {
   let accountId;
 
   if (existing) {
+    console.log("Updating existing eBay account:", existing.id);
     accountId = existing.id;
     await db.update(connectedAccounts)
       .set({ username, updatedAt: new Date() })
@@ -124,7 +132,17 @@ export async function GET(request) {
 
     if (existingSession) {
       await db.update(ebaySessions)
-        .set({ accessToken: access_token, refreshToken: refresh_token, accessTokenExpiresAt, scope: scope ?? null, updatedAt: new Date() })
+        .set({
+          accessToken: access_token,
+          refreshToken: refresh_token,
+          accessTokenExpiresAt,
+          paymentPolicyId: policies.payment,
+          fulfillmentPolicyId: policies.fulfillment,
+          returnPolicyId: policies.return,
+          marketplaceId,
+          scope: scope ?? null,
+          updatedAt: new Date()
+        })
         .where(eq(ebaySessions.connectedAccountId, accountId));
     } else {
       await db.insert(ebaySessions).values({
@@ -133,10 +151,15 @@ export async function GET(request) {
         accessToken: access_token,
         refreshToken: refresh_token,
         accessTokenExpiresAt,
+        paymentPolicyId: policies.payment,
+        fulfillmentPolicyId: policies.fulfillment,
+        returnPolicyId: policies.return,
+        marketplaceId,
         scope: scope ?? null,
       });
     }
   } else {
+    console.log("Creating new eBay account");
     accountId = nanoid();
     await db.insert(connectedAccounts).values({
       id: accountId,
@@ -151,9 +174,15 @@ export async function GET(request) {
       accessToken: access_token,
       refreshToken: refresh_token,
       accessTokenExpiresAt,
+      paymentPolicyId: policies.payment,
+      fulfillmentPolicyId: policies.fulfillment,
+      returnPolicyId: policies.return,
+      marketplaceId,
       scope: scope ?? null,
     });
   }
+
+  console.log("eBay account connected successfully");
 
   return NextResponse.redirect(
     new URL("/dashboard/connections?success=ebay", request.url),
