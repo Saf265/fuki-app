@@ -16,8 +16,7 @@ export async function GET(request) {
 
   // Use basic scopes that are available in sandbox
   const scopes = [
-    "https://api.ebay.com/oauth/api_scope/sell.account",
-    "https://api.ebay.com/oauth/api_scope/sell.inventory",
+    "https://api.ebay.com/oauth/api_scope"
   ];
   const scope = encodeURIComponent(scopes.join(" "));
 

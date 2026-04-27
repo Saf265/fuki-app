@@ -30,13 +30,12 @@ export async function GET(request) {
   // ─── 1. Exchange code for tokens ─────────────────────────────────────────
   const clientId = process.env.EBAY_CLIENT_ID;
   const clientSecret = process.env.EBAY_CLIENT_SECRET;
-  const redirectUri = process.env.EBAY_REDIRECT_URI;
   const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
   const params = new URLSearchParams();
   params.append("grant_type", "authorization_code");
   params.append("code", code);
-  params.append("redirect_uri", redirectUri);
+  params.append("redirect_uri", process.env.EBAY_REDIRECT_URI);
 
   const tokenRes = await fetch("https://api.sandbox.ebay.com/identity/v1/oauth2/token", {
     method: "POST",
@@ -61,8 +60,9 @@ export async function GET(request) {
   let platformUserId = null;
   let email = null;
 
+
   try {
-    const userRes = await fetch("https://api.sandbox.ebay.com/commerce/identity/v1/user", {
+    const userRes = await fetch("https://api.sandbox.ebay.com/commerce/identity/v1/user/", {
       headers: { Authorization: `Bearer ${access_token}` },
     });
     if (userRes.ok) {
