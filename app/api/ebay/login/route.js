@@ -12,7 +12,7 @@ export async function GET(request) {
   }
 
   const clientId = process.env.EBAY_CLIENT_ID;
-  const redirectUri = encodeURIComponent(process.env.EBAY_REDIRECT_URI);
+  const redirectUri = process.env.EBAY_REDIRECT_URI;
 
   // Use basic scopes that are available in sandbox
   const scopes = [
