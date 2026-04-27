@@ -12,11 +12,13 @@ export async function GET(request) {
   }
 
   const clientId = process.env.EBAY_CLIENT_ID;
-  const redirectUri = process.env.EBAY_REDIRECT_URI;
+  const redirectUri = process.env.EBAY_REDIRECT_URI
 
-  // Use basic scopes that are available in sandbox
+  // Scopes nécessaires pour votre application
+  // Commencez avec les scopes de base, ajoutez-en plus selon vos besoins
   const scopes = [
-    "https://api.ebay.com/oauth/api_scope"
+    "https://api.ebay.com/oauth/api_scope/sell.account.readonly",
+    "https://api.ebay.com/oauth/api_scope/sell.inventory",
   ];
   const scope = encodeURIComponent(scopes.join(" "));
 
