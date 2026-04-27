@@ -107,6 +107,18 @@ export default function Publish() {
 
   const updateField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  const handlePublish = async () => {
+    console.log("=== PUBLISH BUTTON CLICKED ===");
+    console.log("Selected Accounts:", selectedAccounts);
+    console.log("Form Data:", form);
+    console.log("Hidden Fields (IDs):", hiddenFields);
+    console.log("Images:", images);
+    console.log("Generated Covers:", generatedCovers);
+    console.log("Locale:", locale);
+
+    // TODO: Implement actual publish logic
+  };
+
   // Fetch accounts on mount
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -458,7 +470,11 @@ export default function Publish() {
 
                 {/* Publish button */}
                 <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm border-t border-border pt-6 -mx-8 px-8 pb-8">
-                  <button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02]">
+                  <button
+                    onClick={handlePublish}
+                    disabled={selectedAccounts.length === 0}
+                    className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02]"
+                  >
                     <Sparkles size={18} />
                     {t("publish_btn")}
                   </button>
