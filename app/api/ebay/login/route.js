@@ -27,7 +27,8 @@ export async function GET(request) {
     `?client_id=${clientId}` +
     `&response_type=code` +
     `&redirect_uri=${redirectUri}` +
-    `&scope=${scope}`;
+    `&scope=${scope}` +
+    `&prompt=login`; // Force consent screen
 
   return NextResponse.redirect(authUrl);
 }

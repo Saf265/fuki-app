@@ -9,6 +9,10 @@ import { NextResponse } from "next/server";
 export async function GET(request) {
   // ─── 0. Get authenticated user ───────────────────────────────────────────
   const session = await auth.api.getSession({ headers: request.headers });
+  console.log("USER")
+  console.log("USER")
+  console.log("USER")
+  console.log("USER")
 
   if (!session?.user?.id) {
     return NextResponse.redirect(
