@@ -7,11 +7,17 @@ const R2_BASE = "https://pub-447d488e350b4fd987abb56665618bf9.r2.dev/datasets-vi
 const cache = new Map();
 const CACHE_TTL = 1000 * 60 * 60;
 
-export async function GET(_, { params }) {
+export async function GET(request, { params }) {
   try {
     const { file } = await params;
+    const { searchParams } = new URL(request.url);
+    const queryLocale = searchParams.get("lang");
+
     const cookieStore = await cookies();
-    const locale = cookieStore.get("locale")?.value ?? "fr";
+    const cookieLocale = cookieStore.get("locale")?.value;
+
+    // Priority: query param > cookie > default
+    const locale = queryLocale || cookieLocale || "fr";
 
     // brands.json n'a pas de locale
     const needsLocale = ["colors.json", "sizes.json", "statuses.json", "groups.json", "package-sizes.json"].includes(file);

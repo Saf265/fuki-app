@@ -201,12 +201,18 @@ export default function Publish() {
               {images.length > 0 && (
                 <button
                   onClick={handleGenerate}
-                  disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-primary/20"
+                  disabled={loading || selectedAccounts.length === 0}
+                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-primary/20"
                 >
                   {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
                   {loading ? t("generating") : t("generate")}
                 </button>
+              )}
+
+              {images.length > 0 && selectedAccounts.length === 0 && (
+                <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/20 rounded-xl px-4 py-3 text-center">
+                  {t("select_account_to_generate")}
+                </p>
               )}
             </div>
           </div>
@@ -329,6 +335,7 @@ export default function Publish() {
                         {t("fields.brand")}
                       </label>
                       <BrandSelect
+                        key={`brand-${locale}`}
                         brandId={hiddenFields.brand_id}
                         onChange={({ label, id }) => {
                           updateField("brand", label);
@@ -341,6 +348,7 @@ export default function Publish() {
                         {t("fields.condition")}
                       </label>
                       <StatusSelect
+                        key={`status-${locale}`}
                         statusId={hiddenFields.status_id}
                         onChange={({ label, id }) => {
                           updateField("condition", label);
@@ -355,6 +363,7 @@ export default function Publish() {
                       {t("fields.category")}
                     </label>
                     <CategorySelect
+                      key={`category-${locale}`}
                       categoryId={hiddenFields.category_id ? Number(hiddenFields.category_id) : null}
                       onChange={({ path, id }) => {
                         updateField("category_path", path);
@@ -369,6 +378,7 @@ export default function Publish() {
                         {t("fields.size")}
                       </label>
                       <SizeSelect
+                        key={`size-${locale}`}
                         sizeId={hiddenFields.size_id ? Number(hiddenFields.size_id) : null}
                         onChange={({ label, id }) => {
                           updateField("size", label);
@@ -381,6 +391,7 @@ export default function Publish() {
                         {t("fields.colors")}
                       </label>
                       <ColorSelect
+                        key={`colors-${locale}`}
                         colorIds={hiddenFields.color_ids ?? []}
                         onChange={(colors) => {
                           updateField("colors", colors.map((c) => c.label).join(", "));
@@ -423,6 +434,7 @@ export default function Publish() {
                         {t("fields.parcel_size")}
                       </label>
                       <PackageSizeSelect
+                        key={`parcel-${locale}`}
                         parcelSizeId={hiddenFields.parcel_size_id}
                         onChange={({ label, id }) => {
                           updateField("parcel_size", label);

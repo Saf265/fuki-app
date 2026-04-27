@@ -74,7 +74,8 @@
     "accounts_selected": "accounts selected",
     "select_platforms": "Select platforms",
     "no_account_connected": "No account connected",
-    "connect_account_first": "Connect a Vinted or eBay account to publish"
+    "connect_account_first": "Connect a Vinted or eBay account to publish",
+    "select_account_to_generate": "Please select at least one account to generate your listing"
   },
   "connections": {
     "title": "Connections",
