@@ -1,5 +1,5 @@
 import { db } from "@/src/db/drizzle/index";
-import { connectedAccounts } from "@/src/db/drizzle/schema";
+import { ebaySessions } from "@/src/db/drizzle/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -8,25 +8,26 @@ import { eq } from "drizzle-orm";
  * @param {string} connectionId - The ID of the connected_accounts record.
  */
 export async function getValidEbayToken(connectionId) {
-  const connection = await db.query.connectedAccounts.findFirst({
-    where: (ca, { eq }) => eq(ca.id, connectionId),
+  // Get the eBay session for this connection
+  const session = await db.query.ebaySessions.findFirst({
+    where: (es, { eq }) => eq(es.connectedAccountId, connectionId),
   });
 
-  if (!connection || connection.platform !== "ebay") {
-    throw new Error("eBay connection not found");
+  if (!session) {
+    throw new Error("eBay session not found for this connection");
   }
 
   const now = new Date();
-  const expiresAt = new Date(connection.accessTokenExpiresAt);
-  
+  const expiresAt = new Date(session.accessTokenExpiresAt);
+
   // Refresh if token expires in less than 5 minutes
   const isAboutToExpire = expiresAt.getTime() - now.getTime() < 5 * 60 * 1000;
 
-  if (connection.accessToken && !isAboutToExpire) {
-    return connection.accessToken;
+  if (session.accessToken && !isAboutToExpire) {
+    return session.accessToken;
   }
 
-  if (!connection.refreshToken) {
+  if (!session.refreshToken) {
     throw new Error("No refresh token available");
   }
 
@@ -39,9 +40,7 @@ export async function getValidEbayToken(connectionId) {
 
   const params = new URLSearchParams();
   params.append("grant_type", "refresh_token");
-  params.append("refresh_token", connection.refreshToken);
-  // Optional: you can include scopes here if you want to downgrade or ensure they match
-  // params.append("scope", "...");
+  params.append("refresh_token", session.refreshToken);
 
   const response = await fetch("https://api.sandbox.ebay.com/identity/v1/oauth2/token", {
     method: "POST",
@@ -60,19 +59,19 @@ export async function getValidEbayToken(connectionId) {
 
   const data = await response.json();
   const newAccessToken = data.access_token;
-  const newRefreshToken = data.refresh_token; // eBay returns a new refresh token too sometimes
+  const newRefreshToken = data.refresh_token; // eBay returns a new refresh token too
   const expiresIn = data.expires_in;
-  const newRefreshedAt = new Date(Date.now() + expiresIn * 1000);
+  const newExpiresAt = new Date(Date.now() + expiresIn * 1000);
 
-  // 2. Update database
-  await db.update(connectedAccounts)
+  // 2. Update eBay session in database
+  await db.update(ebaySessions)
     .set({
       accessToken: newAccessToken,
-      refreshToken: newRefreshToken || connection.refreshToken, // Only update if new one is provided
-      accessTokenExpiresAt: newRefreshedAt,
+      refreshToken: newRefreshToken || session.refreshToken,
+      accessTokenExpiresAt: newExpiresAt,
       updatedAt: new Date(),
     })
-    .where(eq(connectedAccounts.id, connectionId));
+    .where(eq(ebaySessions.connectedAccountId, connectionId));
 
   console.log(`eBay token refreshed successfully for connection ${connectionId}`);
 

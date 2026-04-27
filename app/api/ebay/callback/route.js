@@ -66,17 +66,28 @@ export async function GET(request) {
   try {
     // Commerce Identity API is not available in sandbox
     // For sandbox, extract user ID from token
-    // Token format: v^1.1#i^1#f^0#p^3#r^...
+    // Token format: v^1.1#i^1#I^3#f^0#p^3#r^0#t^...
+    // i^ = user id (simple)
+    // I^ = institution/account id (more unique)
     const tokenParts = access_token.split('#');
+
+    // Try to get the more unique identifier first (I^)
+    const institutionIdPart = tokenParts.find(part => part.startsWith('I^'));
     const userIdPart = tokenParts.find(part => part.startsWith('i^'));
-    if (userIdPart) {
-      platformUserId = userIdPart.substring(2);
+
+    if (institutionIdPart) {
+      // Use institution ID as it's more unique
+      platformUserId = `ebay_${institutionIdPart.substring(2)}`;
+    } else if (userIdPart) {
+      // Fallback to user ID
+      platformUserId = `ebay_${userIdPart.substring(2)}`;
     } else {
+      // Last resort fallback
       platformUserId = `sandbox_${Date.now()}`;
     }
 
     // Use a generic username for sandbox (in production, you'll get real data from Identity API)
-    username = `eBay User ${platformUserId}`;
+    username = `eBay Sandbox User`;
 
     console.log("Extracted:", { platformUserId, username });
   } catch (e) {
