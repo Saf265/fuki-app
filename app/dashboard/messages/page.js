@@ -422,6 +422,7 @@ function ConversationDetail({ conv, accountId, platform, messagesCache, setMessa
           allowReply={allowReply}
           userSide={userSide}
           transaction={conversation?.transaction}
+          platform={platform}
           onSent={(newMsg) => {
             setMessagesCache((prev) => {
               const current = prev[cacheKey];
@@ -722,14 +723,15 @@ function PendingOfferActions({ conversation, accountId, conversationId, currentU
 
 // ─── Message input ────────────────────────────────────────────────────────────
 
-function MessageInput({ conversationId, accountId, allowReply, userSide, transaction, onSent }) {
+function MessageInput({ conversationId, accountId, allowReply, userSide, transaction, platform, onSent }) {
   const [text, setText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
-  const canOffer = transaction != null && !transaction?.item_is_closed;
+  const isEbay = platform === "ebay";
+  const canOffer = !isEbay && transaction != null && !transaction?.item_is_closed;
   const referencePrice = transaction?.offer_price?.amount
     ? parseFloat(transaction.offer_price.amount)
     : null;
@@ -773,7 +775,7 @@ function MessageInput({ conversationId, accountId, allowReply, userSide, transac
         console.log("✅ Image uploadée:", imageUrl);
       }
 
-      // Send message to Vinted API
+      // Send message
       console.log("📝 Envoi du message...");
       const res = await fetch(`/api/messages/${conversationId}/send`, {
         method: "POST",
@@ -782,6 +784,7 @@ function MessageInput({ conversationId, accountId, allowReply, userSide, transac
           accountId,
           text: text.trim() || "",
           photo_url: imageUrl,
+          platform: platform || "vinted",
         }),
       });
 

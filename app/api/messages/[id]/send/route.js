@@ -1,20 +1,113 @@
 import { db } from "@/src/db/drizzle/index";
-import { connectedAccounts, vintedSessions } from "@/src/db/drizzle/schema";
+import { connectedAccounts, ebaySessions, vintedSessions } from "@/src/db/drizzle/schema";
+import { auth } from "@/src/lib/auth";
+import { getValidEbayToken } from "@/src/lib/ebay";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 const VINTED_API_URL = process.env.VINTED_API_URL;
 
 export async function POST(request, { params }) {
+  console.log("=== /api/messages/[id]/send called ===");
+
   const { id: conversationId } = await params;
+  console.log("Conversation ID:", conversationId);
 
   try {
+    // Get authenticated user
+    const session = await auth.api.getSession({ headers: request.headers });
+
+    if (!session?.user?.id) {
+      console.error("User not authenticated");
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    console.log("User ID:", userId);
+
     const body = await request.json();
-    const { accountId, text, photo_url, offer_price } = body;
+    const { accountId, text, photo_url, offer_price, platform } = body;
+    console.log("Request body:", { accountId, hasText: !!text, hasPhoto: !!photo_url, hasOffer: offer_price !== undefined, platform });
 
     if (!accountId) {
       return NextResponse.json({ error: "accountId manquant" }, { status: 400 });
     }
+
+    // ─── Handle eBay message ──────────────────────────────────────────────────
+    if (platform === "ebay") {
+      console.log("Sending eBay message...");
+
+      // Get eBay account
+      const [account] = await db
+        .select({
+          accountId: connectedAccounts.id,
+          username: connectedAccounts.username,
+          platformUserId: connectedAccounts.platformUserId,
+        })
+        .from(connectedAccounts)
+        .innerJoin(ebaySessions, eq(ebaySessions.connectedAccountId, connectedAccounts.id))
+        .where(eq(connectedAccounts.id, accountId))
+        .limit(1);
+
+      if (!account) {
+        console.error("eBay account not found");
+        return NextResponse.json({ error: "Compte eBay introuvable" }, { status: 404 });
+      }
+
+      console.log("eBay account found:", account.username);
+
+      // Get valid token
+      const token = await getValidEbayToken(account.accountId);
+      console.log("Got valid eBay token");
+
+      // Prepare payload
+      const payload = {
+        conversationId: conversationId,
+        messageText: text?.trim() || "",
+      };
+
+      // Add media if photo_url is provided
+      if (photo_url?.trim()) {
+        payload.messageMedia = [{
+          mediaUrl: photo_url.trim(),
+          mediaType: "IMAGE",
+          mediaName: "image.jpg",
+        }];
+      }
+
+      console.log("eBay send_message payload:", JSON.stringify(payload, null, 2));
+
+      // Send message to eBay API
+      const url = "https://api.sandbox.ebay.com/commerce/message/v1/send_message";
+      console.log("eBay API URL:", url);
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      console.log("eBay API response status:", res.status);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("eBay API error:", errorText);
+        throw new Error(`eBay API error ${res.status}: ${errorText}`);
+      }
+
+      const data = await res.json();
+      console.log("eBay API raw response:", JSON.stringify(data, null, 2));
+      console.log("✅ eBay message sent, messageId:", data.messageId);
+
+      return NextResponse.json(data);
+    }
+
+    // ─── Handle Vinted message (default) ──────────────────────────────────────
+    console.log("Sending Vinted message...");
 
     const [account] = await db
       .select({
@@ -35,8 +128,11 @@ export async function POST(request, { params }) {
       .limit(1);
 
     if (!account) {
-      return NextResponse.json({ error: "Compte introuvable" }, { status: 404 });
+      console.error("Vinted account not found");
+      return NextResponse.json({ error: "Compte Vinted introuvable" }, { status: 404 });
     }
+
+    console.log("Vinted account found");
 
     const sessionData = {
       domain: account.domain,
@@ -165,7 +261,9 @@ export async function POST(request, { params }) {
     console.log("✅ Message envoyé");
     return NextResponse.json(data);
   } catch (error) {
-    console.error("❌ Send message error:", error);
+    console.error("=== Send message error ===");
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

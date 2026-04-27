@@ -15,11 +15,11 @@ export async function GET(request) {
   const redirectUri = process.env.EBAY_REDIRECT_URI
 
   // Scopes nécessaires pour votre application
-  // commerce.identity.readonly est REQUIS pour accéder à l'API Identity
   const scopes = [
     "https://api.ebay.com/oauth/api_scope/sell.account.readonly",
     "https://api.ebay.com/oauth/api_scope/sell.inventory",
-    "https://api.ebay.com/oauth/api_scope/commerce.identity.readonly", // Required for Identity API
+    "https://api.ebay.com/oauth/api_scope/commerce.identity.readonly",
+    "https://api.ebay.com/oauth/api_scope/commerce.message", // Required for Messages API
   ];
   const scope = encodeURIComponent(scopes.join(" "));
 

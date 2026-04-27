@@ -18,6 +18,9 @@ export async function GET(request) {
     // Get authenticated user
     const session = await auth.api.getSession({ headers: request.headers });
 
+    console.log("Session:", session ? "Found" : "Not found");
+    console.log("Session user:", session?.user);
+
     if (!session?.user?.id) {
       console.error("User not authenticated");
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -48,6 +51,9 @@ export async function GET(request) {
       .where(eq(connectedAccounts.userId, userId));
 
     console.log("Vinted accounts found:", vintedAccounts.length);
+    if (vintedAccounts.length > 0) {
+      console.log("Vinted accounts:", vintedAccounts.map(a => ({ id: a.accountId, username: a.username })));
+    }
 
     // ─── Fetch eBay conversations ─────────────────────────────────────────────
     console.log("Fetching eBay accounts...");
@@ -62,6 +68,9 @@ export async function GET(request) {
       .where(eq(connectedAccounts.userId, userId));
 
     console.log("eBay accounts found:", ebayAccounts.length);
+    if (ebayAccounts.length > 0) {
+      console.log("eBay accounts:", ebayAccounts.map(a => ({ id: a.accountId, username: a.username })));
+    }
 
     if (vintedAccounts.length === 0 && ebayAccounts.length === 0) {
       console.log("No accounts found");
