@@ -187,7 +187,7 @@ export default function Publish() {
             {/* Colonne gauche : images + covers */}
             <div className="w-72 shrink-0 border-r border-border flex flex-col gap-4 p-5 overflow-y-auto">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Photos</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("photos")}</p>
                 <span className="text-xs text-muted-foreground">{images.length}</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
@@ -196,7 +196,7 @@ export default function Publish() {
                     <img src={img.preview} alt="" className="w-full h-full object-cover" />
                     {i === 0 && (
                       <span className="absolute bottom-1 left-1 text-[9px] font-bold bg-black/50 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm leading-none">
-                        1ère
+                        {t("main_photo")}
                       </span>
                     )}
                     <button
@@ -237,106 +237,169 @@ export default function Publish() {
             </div>
 
             {/* Colonne droite : formulaire */}
-            <div className="flex-1 overflow-y-auto p-8">
-              <div className="max-w-xl flex flex-col gap-5">
-                <p className="text-sm font-semibold">{t("listing_details")}</p>
-
-                <FormField label={t("fields.title")} value={form.title} onChange={(v) => updateField("title", v)} />
-                <FormField label={t("fields.description")} value={form.description} onChange={(v) => updateField("description", v)} multiline />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">{t("fields.brand")}</label>
-                    <BrandSelect
-                      brandId={hiddenFields.brand_id}
-                      onChange={({ label, id }) => {
-                        updateField("brand", label);
-                        setHiddenFields((prev) => ({ ...prev, brand_id: String(id) }));
-                      }}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">{t("fields.condition")}</label>
-                    <StatusSelect
-                      statusId={hiddenFields.status_id}
-                      onChange={({ label, id }) => {
-                        updateField("condition", label);
-                        setHiddenFields((prev) => ({ ...prev, status_id: String(id) }));
-                      }}
-                    />
-                  </div>
+            <div className="flex-1 overflow-y-auto">
+              <div className="max-w-3xl mx-auto p-8">
+                {/* Header section */}
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold mb-2">{t("listing_details")}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {t("listing_subtitle")}
+                  </p>
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">{t("fields.category")}</label>
-                  <CategorySelect
-                    categoryId={hiddenFields.category_id ? Number(hiddenFields.category_id) : null}
-                    onChange={({ path, id }) => {
-                      updateField("category_path", path);
-                      setHiddenFields((prev) => ({ ...prev, category_id: String(id) }));
-                    }}
+                {/* Main info card */}
+                <div className="bg-card border border-border rounded-2xl p-6 mb-6 space-y-6">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-1 h-5 bg-primary rounded-full"></div>
+                      <h3 className="font-semibold">{t("sections.main_info")}</h3>
+                    </div>
+                    <FormField label={t("fields.title")} value={form.title} onChange={(v) => updateField("title", v)} />
+                  </div>
+
+                  <FormField
+                    label={t("fields.description")}
+                    value={form.description}
+                    onChange={(v) => updateField("description", v)}
+                    multiline
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">{t("fields.size")}</label>
-                    <SizeSelect
-                      sizeId={hiddenFields.size_id ? Number(hiddenFields.size_id) : null}
-                      onChange={({ label, id }) => {
-                        updateField("size", label);
-                        setHiddenFields((prev) => ({ ...prev, size_id: String(id) }));
-                      }}
-                    />
+                {/* Product details card */}
+                <div className="bg-card border border-border rounded-2xl p-6 mb-6 space-y-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1 h-5 bg-primary rounded-full"></div>
+                    <h3 className="font-semibold">{t("sections.product_details")}</h3>
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">{t("fields.colors")}</label>
-                    <ColorSelect
-                      colorIds={hiddenFields.color_ids ?? []}
-                      onChange={(colors) => {
-                        updateField("colors", colors.map((c) => c.label).join(", "));
-                        setHiddenFields((prev) => ({ ...prev, color_ids: colors.map((c) => c.id) }));
-                      }}
-                    />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">{t("fields.price")}</label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={form.price}
-                        onChange={(e) => updateField("price", e.target.value)}
-                        placeholder="0.00"
-                        className="w-full bg-muted/40 border border-border rounded-xl pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                        {t("fields.brand")}
+                      </label>
+                      <BrandSelect
+                        brandId={hiddenFields.brand_id}
+                        onChange={({ label, id }) => {
+                          updateField("brand", label);
+                          setHiddenFields((prev) => ({ ...prev, brand_id: String(id) }));
+                        }}
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">€</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                        {t("fields.condition")}
+                      </label>
+                      <StatusSelect
+                        statusId={hiddenFields.status_id}
+                        onChange={({ label, id }) => {
+                          updateField("condition", label);
+                          setHiddenFields((prev) => ({ ...prev, status_id: String(id) }));
+                        }}
+                      />
                     </div>
                   </div>
+
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">{t("fields.parcel_size")}</label>
-                    <PackageSizeSelect
-                      parcelSizeId={hiddenFields.parcel_size_id}
-                      onChange={({ label, id }) => {
-                        updateField("parcel_size", label);
-                        setHiddenFields((prev) => ({ ...prev, parcel_size_id: id }));
+                    <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                      {t("fields.category")}
+                    </label>
+                    <CategorySelect
+                      categoryId={hiddenFields.category_id ? Number(hiddenFields.category_id) : null}
+                      onChange={({ path, id }) => {
+                        updateField("category_path", path);
+                        setHiddenFields((prev) => ({ ...prev, category_id: String(id) }));
                       }}
                     />
                   </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                        {t("fields.size")}
+                      </label>
+                      <SizeSelect
+                        sizeId={hiddenFields.size_id ? Number(hiddenFields.size_id) : null}
+                        onChange={({ label, id }) => {
+                          updateField("size", label);
+                          setHiddenFields((prev) => ({ ...prev, size_id: String(id) }));
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                        {t("fields.colors")}
+                      </label>
+                      <ColorSelect
+                        colorIds={hiddenFields.color_ids ?? []}
+                        onChange={(colors) => {
+                          updateField("colors", colors.map((c) => c.label).join(", "));
+                          setHiddenFields((prev) => ({ ...prev, color_ids: colors.map((c) => c.id) }));
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
 
+                {/* Pricing & shipping card */}
+                <div className="bg-card border border-border rounded-2xl p-6 mb-6 space-y-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1 h-5 bg-primary rounded-full"></div>
+                    <h3 className="font-semibold">{t("sections.pricing_shipping")}</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                        {t("fields.price")}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={form.price}
+                          onChange={(e) => updateField("price", e.target.value)}
+                          placeholder="0.00"
+                          className="w-full bg-muted/40 border border-border rounded-xl pl-4 pr-12 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
+                          EUR
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                        {t("fields.parcel_size")}
+                      </label>
+                      <PackageSizeSelect
+                        parcelSizeId={hiddenFields.parcel_size_id}
+                        onChange={({ label, id }) => {
+                          updateField("parcel_size", label);
+                          setHiddenFields((prev) => ({ ...prev, parcel_size_id: id }));
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ISBN if exists */}
                 {form.isbn && (
-                  <FormField label={t("fields.isbn")} value={form.isbn} onChange={(v) => updateField("isbn", v)} />
+                  <div className="bg-card border border-border rounded-2xl p-6 mb-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-1 h-5 bg-primary rounded-full"></div>
+                      <h3 className="font-semibold">{t("sections.additional_info")}</h3>
+                    </div>
+                    <FormField label={t("fields.isbn")} value={form.isbn} onChange={(v) => updateField("isbn", v)} />
+                  </div>
                 )}
 
-                <button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-primary/20 mt-2">
-                  <Sparkles size={16} />
-                  {t("publish_btn")}
-                </button>
+                {/* Publish button */}
+                <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm border-t border-border pt-6 -mx-8 px-8 pb-8">
+                  <button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02]">
+                    <Sparkles size={18} />
+                    {t("publish_btn")}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -368,12 +431,12 @@ function Dropzone({ onDrop, onDragOver, onDragLeave, isDragging, onFiles, t }) {
 }
 
 function FormField({ label, value, onChange, multiline = false }) {
-  const base = "w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all resize-none";
+  const base = "w-full bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all resize-none";
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+    <div className="flex flex-col gap-2">
+      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">{label}</label>
       {multiline
-        ? <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} className={base} />
+        ? <textarea rows={5} value={value} onChange={(e) => onChange(e.target.value)} className={base} />
         : <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className={base} />
       }
     </div>

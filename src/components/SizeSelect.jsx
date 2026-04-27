@@ -1,5 +1,6 @@
 "use client";
 
+import { useDropdownPosition } from "@/hooks/use-dropdown-position";
 import { ChevronDown, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -8,6 +9,7 @@ export default function SizeSelect({ sizeId, onChange }) {
   const [search, setSearch] = useState("");
   const [sizesData, setSizesData] = useState(null);
   const ref = useRef(null);
+  const openUpward = useDropdownPosition(open, ref, 250);
 
   useEffect(() => {
     fetch("/api/data/sizes.json")
@@ -68,7 +70,9 @@ export default function SizeSelect({ sizeId, onChange }) {
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden">
+        <div className={`absolute z-50 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden ${
+          openUpward ? "bottom-full mb-1.5" : "top-full mt-1.5"
+        }`}>
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
             <Search size={13} className="text-muted-foreground shrink-0" />
             <input

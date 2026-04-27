@@ -1,5 +1,6 @@
 "use client";
 
+import { useDropdownPosition } from "@/hooks/use-dropdown-position";
 import { ChevronDown, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -49,6 +50,7 @@ export default function ColorSelect({ colorIds = [], onChange }) {
   const [colors, setColors] = useState([]);
   const [selected, setSelected] = useState([]);
   const ref = useRef(null);
+  const openUpward = useDropdownPosition(open, ref, 250);
 
   // Charger les couleurs depuis R2
   useEffect(() => {
@@ -123,7 +125,9 @@ export default function ColorSelect({ colorIds = [], onChange }) {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden">
+        <div className={`absolute z-50 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden ${
+          openUpward ? "bottom-full mb-1.5" : "top-full mt-1.5"
+        }`}>
           <ul className="max-h-60 overflow-y-auto py-1">
             {colors.length === 0 && (
               <li className="px-4 py-3 text-sm text-muted-foreground text-center">Chargement…</li>

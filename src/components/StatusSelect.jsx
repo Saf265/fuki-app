@@ -1,5 +1,6 @@
 "use client";
 
+import { useDropdownPosition } from "@/hooks/use-dropdown-position";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -7,6 +8,7 @@ export default function StatusSelect({ statusId, onChange }) {
   const [open, setOpen] = useState(false);
   const [statuses, setStatuses] = useState([]);
   const ref = useRef(null);
+  const openUpward = useDropdownPosition(open, ref, 200);
 
   useEffect(() => {
     fetch("/api/data/statuses.json")
@@ -54,7 +56,9 @@ export default function StatusSelect({ statusId, onChange }) {
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden">
+        <div className={`absolute z-50 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden ${
+          openUpward ? "bottom-full mb-1.5" : "top-full mt-1.5"
+        }`}>
           <ul className="py-1">
             {statuses.map((status) => (
               <li

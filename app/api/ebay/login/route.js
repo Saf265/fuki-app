@@ -30,6 +30,6 @@ export async function GET(request) {
     `&redirect_uri=${redirectUri}` +
     `&scope=${scope}` +
     `&prompt=login`; // Force consent screen
-
+  it
   return NextResponse.redirect(authUrl);
 }

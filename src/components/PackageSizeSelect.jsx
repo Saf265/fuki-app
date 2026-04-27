@@ -1,5 +1,6 @@
 "use client";
 
+import { useDropdownPosition } from "@/hooks/use-dropdown-position";
 import { ChevronDown, Package } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -7,6 +8,7 @@ export default function PackageSizeSelect({ parcelSizeId, onChange }) {
   const [open, setOpen] = useState(false);
   const [packageSizes, setPackageSizes] = useState([]);
   const ref = useRef(null);
+  const openUpward = useDropdownPosition(open, ref, 300);
 
   useEffect(() => {
     fetch("/api/data/package-sizes.json")
@@ -54,7 +56,9 @@ export default function PackageSizeSelect({ parcelSizeId, onChange }) {
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden">
+        <div className={`absolute z-50 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden ${
+          openUpward ? "bottom-full mb-1.5" : "top-full mt-1.5"
+        }`}>
           <ul className="py-1">
             {packageSizes.map((pkg) => (
               <li

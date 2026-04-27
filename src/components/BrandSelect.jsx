@@ -1,5 +1,6 @@
 "use client";
 
+import { useDropdownPosition } from "@/hooks/use-dropdown-position";
 import { ChevronDown, Loader2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -11,6 +12,7 @@ export default function BrandSelect({ brandId, onChange }) {
   const [selected, setSelected] = useState(null);
   const ref = useRef(null);
   const debounceTimer = useRef(null);
+  const openUpward = useDropdownPosition(open, ref);
 
   // Charger immédiatement pour résoudre brandId rapidement
   useEffect(() => {
@@ -78,7 +80,9 @@ export default function BrandSelect({ brandId, onChange }) {
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden">
+        <div className={`absolute z-50 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden ${
+          openUpward ? "bottom-full mb-1.5" : "top-full mt-1.5"
+        }`}>
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
             <Search size={13} className="text-muted-foreground shrink-0" />
             <input

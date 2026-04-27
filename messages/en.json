@@ -36,7 +36,14 @@
     "generated_covers": "Generated visuals",
     "restart": "← Start over",
     "listing_details": "Listing details",
+    "listing_subtitle": "Review and complete the automatically generated information",
     "publish_btn": "Publish listing",
+    "sections": {
+      "main_info": "Main information",
+      "product_details": "Product details",
+      "pricing_shipping": "Pricing & shipping",
+      "additional_info": "Additional information"
+    },
     "fields": {
       "title": "Title",
       "description": "Description",

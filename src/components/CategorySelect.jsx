@@ -1,5 +1,6 @@
 "use client";
 
+import { useDropdownPosition } from "@/hooks/use-dropdown-position";
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -15,6 +16,7 @@ export default function CategorySelect({ categoryId, onChange }) {
   const [path, setPath] = useState([]); // [{ label, id, children }, ...]
   const [search, setSearch] = useState("");
   const ref = useRef(null);
+  const openUpward = useDropdownPosition(open, ref, 300);
 
   useEffect(() => {
     fetch("/api/data/groups.json")
@@ -98,7 +100,9 @@ export default function CategorySelect({ categoryId, onChange }) {
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden">
+        <div className={`absolute z-50 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden ${
+          openUpward ? "bottom-full mb-1.5" : "top-full mt-1.5"
+        }`}>
           {/* Breadcrumb */}
           {path.length > 0 && (
             <div className="px-3 py-2 border-b border-border flex items-center gap-1 text-xs text-muted-foreground">
