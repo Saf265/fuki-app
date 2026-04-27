@@ -58,10 +58,26 @@ export async function GET(request) {
 
   // ─── 2. Fetch seller identity ─────────────────────────────────────────────
   let platformUserId = null;
+  let username = "eBay User";
+  let marketplaceId = "EBAY_US"; // Default marketplace
 
   console.log("=== eBay User Info Fetch ===");
   console.log("Access token (first 20 chars):", access_token?.substring(0, 20));
   console.log("Scopes received:", scope);
+
+  try {
+    // Try to get marketplace info (may fail in sandbox)
+    const marketplaceInfo = await getUserMarketplace(access_token);
+    if (marketplaceInfo) {
+      marketplaceId = marketplaceInfo.marketplaceId || marketplaceId;
+      username = marketplaceInfo.username || username;
+      console.log("Marketplace info retrieved:", marketplaceInfo);
+    } else {
+      console.log("Marketplace info not available (sandbox limitation)");
+    }
+  } catch (e) {
+    console.error("Error fetching marketplace info:", e);
+  }
 
   try {
     // Commerce Identity API is not available in sandbox
@@ -85,24 +101,45 @@ export async function GET(request) {
       // Last resort fallback
       platformUserId = `sandbox_${Date.now()}`;
     }
-
-
-
   } catch (e) {
     console.error("eBay user info extraction exception:", e);
     // Fallback
     platformUserId = `sandbox_${Date.now()}`;
   }
 
-  const marketplaceId = await getUserMarketplace(access_token)
-  const policies = await fetchUserEbayPolicies(access_token, marketplaceId)
-  const username = marketplaceId.username
+  // Fetch policies (may fail in sandbox)
+  let paymentPolicyId = null;
+  let fulfillmentPolicyId = null;
+  let returnPolicyId = null;
+
+  try {
+    const policiesResult = await fetchUserEbayPolicies(access_token, marketplaceId);
+    if (policiesResult?.success && policiesResult?.policies) {
+      // Get first policy of each type if available
+      const firstPayment = policiesResult.policies.payment?.[0];
+      const firstFulfillment = policiesResult.policies.fulfillment?.[0];
+      const firstReturn = policiesResult.policies.return?.[0];
+
+      paymentPolicyId = firstPayment?.paymentPolicyId || null;
+      fulfillmentPolicyId = firstFulfillment?.fulfillmentPolicyId || null;
+      returnPolicyId = firstReturn?.returnPolicyId || null;
+
+      console.log("Policies retrieved:", {
+        payment: paymentPolicyId,
+        fulfillment: fulfillmentPolicyId,
+        return: returnPolicyId
+      });
+    } else {
+      console.log("Policies not available (sandbox limitation or no policies configured)");
+    }
+  } catch (e) {
+    console.error("Error fetching policies:", e);
+  }
 
   console.log("=== eBay Account Info ===");
   console.log("Platform User ID:", platformUserId);
   console.log("Username:", username);
   console.log("Marketplace ID:", marketplaceId);
-  console.log("Policies:", policies);
 
   // ─── 3. Upsert connected account + ebay session ───────────────────────────
   const accessTokenExpiresAt = new Date(Date.now() + expires_in * 1000);
@@ -136,9 +173,9 @@ export async function GET(request) {
           accessToken: access_token,
           refreshToken: refresh_token,
           accessTokenExpiresAt,
-          paymentPolicyId: policies.payment,
-          fulfillmentPolicyId: policies.fulfillment,
-          returnPolicyId: policies.return,
+          paymentPolicyId,
+          fulfillmentPolicyId,
+          returnPolicyId,
           marketplaceId,
           scope: scope ?? null,
           updatedAt: new Date()
@@ -151,9 +188,9 @@ export async function GET(request) {
         accessToken: access_token,
         refreshToken: refresh_token,
         accessTokenExpiresAt,
-        paymentPolicyId: policies.payment,
-        fulfillmentPolicyId: policies.fulfillment,
-        returnPolicyId: policies.return,
+        paymentPolicyId,
+        fulfillmentPolicyId,
+        returnPolicyId,
         marketplaceId,
         scope: scope ?? null,
       });
@@ -174,9 +211,9 @@ export async function GET(request) {
       accessToken: access_token,
       refreshToken: refresh_token,
       accessTokenExpiresAt,
-      paymentPolicyId: policies.payment,
-      fulfillmentPolicyId: policies.fulfillment,
-      returnPolicyId: policies.return,
+      paymentPolicyId,
+      fulfillmentPolicyId,
+      returnPolicyId,
       marketplaceId,
       scope: scope ?? null,
     });

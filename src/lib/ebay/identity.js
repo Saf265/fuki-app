@@ -22,7 +22,7 @@ export async function getUserMarketplace(token) {
 
   // Le champ exact renvoyé par eBay est registrationMarketplaceId
 
-  return { makerplaceId: data.registrationMarketplaceId, username: data?.userId } // Exemple: "EBAY_FR"
+  return { marketplaceId: data.registrationMarketplaceId, username: data?.userId } // Exemple: "EBAY_FR"
 }
 
 export async function fetchUserEbayPolicies(token, marketplaceId) {
