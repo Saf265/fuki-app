@@ -1,12 +1,22 @@
 import { db } from "@/src/db/drizzle/index";
-import { connectedAccounts, ebaySessions, users } from "@/src/db/drizzle/schema";
+import { connectedAccounts, ebaySessions } from "@/src/db/drizzle/schema";
+import { auth } from "@/src/lib/auth";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 
-const DEFAULT_USER_ID = "default-user";
 
 export async function GET(request) {
+  // ─── 0. Get authenticated user ───────────────────────────────────────────
+  const session = await auth.api.getSession({ headers: request.headers });
+
+  if (!session?.user?.id) {
+    return NextResponse.redirect(
+      new URL("/login?error=not_authenticated", request.url),
+    );
+  }
+
+  const userId = session.user.id;
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const error = searchParams.get("error");
@@ -49,38 +59,45 @@ export async function GET(request) {
   // ─── 2. Fetch seller identity ─────────────────────────────────────────────
   let username = null;
   let platformUserId = null;
+  let email = null;
 
   try {
-    const userRes = await fetch("https://apiz.sandbox.ebay.com/commerce/identity/v1/user", {
+    const userRes = await fetch("https://api.sandbox.ebay.com/commerce/identity/v1/user", {
       headers: { Authorization: `Bearer ${access_token}` },
     });
     if (userRes.ok) {
       const userData = await userRes.json();
-      platformUserId = userData.userId || userData.username || null;
-      username =
-        userData.individualAccount?.firstName ||
-        userData.businessAccount?.businessName ||
-        userData.username ||
-        null;
+      console.log("USER", userData)
+
+      // Extract userId (always present in the response)
+      platformUserId = userData.userId;
+
+      // Extract username and email based on account type
+      if (userData.accountType === "INDIVIDUAL" && userData.individualAccount) {
+        const individual = userData.individualAccount;
+        username = individual.firstName && individual.lastName
+          ? `${individual.firstName} ${individual.lastName}`
+          : userData.username;
+        email = individual.email;
+      } else if (userData.accountType === "BUSINESS" && userData.businessAccount) {
+        const business = userData.businessAccount;
+        username = business.name || business.doingBusinessAs || userData.username;
+        email = business.email;
+      } else {
+        username = userData.username;
+      }
     }
   } catch (e) {
     console.warn("eBay identity fetch failed:", e.message);
   }
 
-  // ─── 3. Ensure default user exists ───────────────────────────────────────
-  await db.insert(users).values({
-    id: DEFAULT_USER_ID,
-    name: "Utilisateur",
-    email: "default@fuki.app",
-  }).onConflictDoNothing();
-
-  // ─── 4. Upsert connected account + ebay session ───────────────────────────
+  // ─── 3. Upsert connected account + ebay session ───────────────────────────
   const accessTokenExpiresAt = new Date(Date.now() + expires_in * 1000);
 
   const existing = platformUserId
     ? await db.query.connectedAccounts.findFirst({
       where: (ca, { and, eq }) => and(
-        eq(ca.userId, DEFAULT_USER_ID),
+        eq(ca.userId, userId),
         eq(ca.platform, "ebay"),
         eq(ca.platformUserId, platformUserId),
       ),
@@ -117,7 +134,7 @@ export async function GET(request) {
     accountId = nanoid();
     await db.insert(connectedAccounts).values({
       id: accountId,
-      userId: DEFAULT_USER_ID,
+      userId: userId,
       platform: "ebay",
       username,
       platformUserId,
