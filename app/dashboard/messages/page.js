@@ -18,6 +18,7 @@ export default function Messages() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [platformFilter, setPlatformFilter] = useState("all"); // "all", "vinted", "ebay"
   // page courante par accountId
   const [currentPages, setCurrentPages] = useState({});
   // données paginées par accountId : { [accountId]: { [page]: conv[] } }
@@ -49,7 +50,11 @@ export default function Messages() {
 
       // Premier chargement : init accounts + selectedAccount
       if (page === 1) {
-        setAccounts(incoming.map((a) => ({ accountId: a.accountId, username: a.username })));
+        setAccounts(incoming.map((a) => ({
+          accountId: a.accountId,
+          username: a.username,
+          platform: a.platform // "vinted" ou "ebay"
+        })));
         setSelectedAccount((s) => s ?? incoming[0]?.accountId ?? null);
         setCurrentPages((prev) => {
           const next = { ...prev };
@@ -128,10 +133,44 @@ export default function Messages() {
           </button>
         </div>
 
+        {/* Platform filter */}
+        <div className="px-6 py-3 border-b border-border shrink-0 flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Plateforme:</span>
+          <div className="flex gap-1">
+            <button
+              onClick={() => setPlatformFilter("all")}
+              className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${platformFilter === "all"
+                ? "bg-primary text-white"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+            >
+              Toutes
+            </button>
+            <button
+              onClick={() => setPlatformFilter("vinted")}
+              className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${platformFilter === "vinted"
+                ? "bg-primary text-white"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+            >
+              Vinted
+            </button>
+            <button
+              onClick={() => setPlatformFilter("ebay")}
+              className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${platformFilter === "ebay"
+                ? "bg-primary text-white"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+            >
+              eBay
+            </button>
+          </div>
+        </div>
+
         {/* Account tabs */}
-        {accounts.length > 1 && (
+        {accounts.filter(a => platformFilter === "all" || a.platform === platformFilter).length > 1 && (
           <div className="flex gap-1 px-6 border-b border-border shrink-0">
-            {accounts.map((account) => {
+            {accounts.filter(a => platformFilter === "all" || a.platform === platformFilter).map((account) => {
               const unread = Object.values(pageCache[account.accountId] ?? {}).flat().filter((c) => c.unread).length;
               return (
                 <button
@@ -207,6 +246,7 @@ export default function Messages() {
               <ConversationDetail
                 conv={selectedConv}
                 accountId={selectedAccount}
+                platform={accounts.find(a => a.accountId === selectedAccount)?.platform || "vinted"}
                 messagesCache={messagesCache}
                 setMessagesCache={setMessagesCache}
               />
@@ -264,7 +304,7 @@ function ConversationRow({ conv, isSelected, onClick }) {
 
 // ─── Conversation detail ──────────────────────────────────────────────────────
 
-function ConversationDetail({ conv, accountId, messagesCache, setMessagesCache }) {
+function ConversationDetail({ conv, accountId, platform, messagesCache, setMessagesCache }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
@@ -282,15 +322,15 @@ function ConversationDetail({ conv, accountId, messagesCache, setMessagesCache }
     console.log("🔄 Chargement des messages...");
     setIsLoading(true);
     setError(null);
-    fetch(`/api/messages/${conv.conv_id}?accountId=${accountId}`)
+    fetch(`/api/messages/${conv.conv_id}?accountId=${accountId}&platform=${platform}`)
       .then((r) => r.ok ? r.json() : Promise.reject("Erreur serveur"))
       .then((d) => {
-        setMessagesCache((prev) => ({ ...prev, [cacheKey]: d.conversation }));
+        setMessagesCache((prev) => ({ ...prev, [cacheKey]: d.conversation || d }));
         console.log("✅ Messages chargés");
       })
       .catch((e) => setError(String(e)))
       .finally(() => setIsLoading(false));
-  }, [conv.conv_id, accountId, cacheKey, messagesCache, setMessagesCache]);
+  }, [conv.conv_id, accountId, platform, cacheKey, messagesCache, setMessagesCache]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

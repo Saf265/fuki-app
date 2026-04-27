@@ -8,30 +8,52 @@ import { eq } from "drizzle-orm";
  * @param {string} connectionId - The ID of the connected_accounts record.
  */
 export async function getValidEbayToken(connectionId) {
+  console.log("=== getValidEbayToken called ===");
+  console.log("Connection ID:", connectionId);
+
   // Get the eBay session for this connection
   const session = await db.query.ebaySessions.findFirst({
     where: (es, { eq }) => eq(es.connectedAccountId, connectionId),
   });
 
+  console.log("Session found:", session ? "Yes" : "No");
+
   if (!session) {
+    console.error("No eBay session found for connection:", connectionId);
     throw new Error("eBay session not found for this connection");
   }
+
+  console.log("Session details:", {
+    hasAccessToken: !!session.accessToken,
+    hasRefreshToken: !!session.refreshToken,
+    expiresAt: session.accessTokenExpiresAt,
+  });
 
   const now = new Date();
   const expiresAt = new Date(session.accessTokenExpiresAt);
 
   // Refresh if token expires in less than 5 minutes
-  const isAboutToExpire = expiresAt.getTime() - now.getTime() < 5 * 60 * 1000;
+  const timeUntilExpiry = expiresAt.getTime() - now.getTime();
+  const isAboutToExpire = timeUntilExpiry < 5 * 60 * 1000;
+
+  console.log("Token expiry check:", {
+    now: now.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+    timeUntilExpiryMinutes: Math.round(timeUntilExpiry / 60000),
+    isAboutToExpire,
+  });
 
   if (session.accessToken && !isAboutToExpire) {
+    console.log("✓ Token is still valid, returning existing token");
     return session.accessToken;
   }
 
   if (!session.refreshToken) {
+    console.error("No refresh token available");
     throw new Error("No refresh token available");
   }
 
-  console.log(`Refreshing eBay token for connection ${connectionId}...`);
+  console.log("⟳ Token needs refresh, starting refresh process...");
 
   // 1. Prepare refresh request
   const clientId = process.env.EBAY_CLIENT_ID;
@@ -42,6 +64,8 @@ export async function getValidEbayToken(connectionId) {
   params.append("grant_type", "refresh_token");
   params.append("refresh_token", session.refreshToken);
 
+  console.log("Calling eBay token refresh API...");
+
   const response = await fetch("https://api.sandbox.ebay.com/identity/v1/oauth2/token", {
     method: "POST",
     headers: {
@@ -50,6 +74,8 @@ export async function getValidEbayToken(connectionId) {
     },
     body: params.toString(),
   });
+
+  console.log("eBay refresh API response status:", response.status);
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -63,7 +89,16 @@ export async function getValidEbayToken(connectionId) {
   const expiresIn = data.expires_in;
   const newExpiresAt = new Date(Date.now() + expiresIn * 1000);
 
+  console.log("New token received:", {
+    hasNewAccessToken: !!newAccessToken,
+    hasNewRefreshToken: !!newRefreshToken,
+    expiresIn: expiresIn,
+    newExpiresAt: newExpiresAt.toISOString(),
+  });
+
   // 2. Update eBay session in database
+  console.log("Updating database with new tokens...");
+
   await db.update(ebaySessions)
     .set({
       accessToken: newAccessToken,
@@ -73,7 +108,7 @@ export async function getValidEbayToken(connectionId) {
     })
     .where(eq(ebaySessions.connectedAccountId, connectionId));
 
-  console.log(`eBay token refreshed successfully for connection ${connectionId}`);
+  console.log("✓ eBay token refreshed successfully for connection:", connectionId);
 
   return newAccessToken;
 }
