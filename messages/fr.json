@@ -65,7 +65,16 @@
       "colors": "Sélectionner des couleurs…"
     },
     "loading": "Chargement...",
-    "no_results": "Aucun résultat"
+    "no_results": "Aucun résultat",
+    "select_account": "Compte de publication",
+    "select_accounts": "Comptes de publication",
+    "selected_accounts": "Comptes sélectionnés",
+    "choose_account": "Choisir un compte",
+    "choose_accounts": "Choisir des comptes",
+    "accounts_selected": "comptes sélectionnés",
+    "select_platforms": "Sélectionnez les plateformes",
+    "no_account_connected": "Aucun compte connecté",
+    "connect_account_first": "Connectez un compte Vinted ou eBay pour publier"
   },
   "connections": {
     "title": "Connexions",

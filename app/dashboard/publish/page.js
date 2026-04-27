@@ -6,9 +6,9 @@ import ColorSelect from "@/components/ColorSelect";
 import PackageSizeSelect from "@/components/PackageSizeSelect";
 import SizeSelect from "@/components/SizeSelect";
 import StatusSelect from "@/components/StatusSelect";
-import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
+import { ChevronDown, ImagePlus, Loader2, Sparkles, Store, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Sidebar } from "../page";
 
 const MAX_IMAGES = 6;
@@ -23,6 +23,8 @@ export default function Publish() {
   const [hiddenFields, setHiddenFields] = useState({});
   const [generatedCovers, setGeneratedCovers] = useState([]);
   const [error, setError] = useState(null);
+  const [accounts, setAccounts] = useState({ vinted: [], ebay: [] });
+  const [selectedAccounts, setSelectedAccounts] = useState([]);
 
   const handleFiles = (files) => {
     const valid = Array.from(files)
@@ -105,6 +107,25 @@ export default function Publish() {
 
   const updateField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  // Fetch accounts on mount
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const res = await fetch("/api/connections");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.connections) {
+            setAccounts(data.connections);
+            // Don't auto-select any account - let user choose
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch accounts", err);
+      }
+    };
+    fetchAccounts();
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-background text-foreground font-sans">
       <Sidebar active="publish" />
@@ -128,6 +149,14 @@ export default function Publish() {
           /* ── État initial : upload centré ── */
           <div className="flex-1 flex items-center justify-center p-10">
             <div className="w-full max-w-lg flex flex-col gap-5">
+              {/* Account selector */}
+              <AccountSelector
+                accounts={accounts}
+                selectedAccounts={selectedAccounts}
+                onSelect={setSelectedAccounts}
+                t={t}
+              />
+
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold">{t("photos")}</p>
                 <span className="text-xs text-muted-foreground tabular-nums">{images.length} / {MAX_IMAGES}</span>
@@ -186,6 +215,28 @@ export default function Publish() {
           <div className="flex-1 flex overflow-hidden">
             {/* Colonne gauche : images + covers */}
             <div className="w-72 shrink-0 border-r border-border flex flex-col gap-4 p-5 overflow-y-auto">
+              {/* Account info */}
+              {selectedAccounts.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("selected_accounts")}</p>
+                  {selectedAccounts.map((account) => (
+                    <div key={`${account.platform}-${account.id}`} className="bg-card border border-border rounded-lg p-3 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg overflow-hidden border border-border shrink-0">
+                        <img
+                          src={account.platform === "vinted" ? "/vinted.jpeg" : "/ebay.png"}
+                          className="w-full h-full object-cover"
+                          alt={account.platform}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{account.username}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{account.platform}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("photos")}</p>
                 <span className="text-xs text-muted-foreground">{images.length}</span>
@@ -442,4 +493,152 @@ function FormField({ label, value, onChange, multiline = false }) {
     </div>
   );
 }
+
+function AccountSelector({ accounts, selectedAccounts, onSelect, t }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const allAccounts = [
+    ...accounts.vinted.map(a => ({ ...a, platform: "vinted" })),
+    ...accounts.ebay.map(a => ({ ...a, platform: "ebay" }))
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleAccount = (account) => {
+    const isSelected = selectedAccounts.some(
+      a => a.id === account.id && a.platform === account.platform
+    );
+
+    if (isSelected) {
+      onSelect(selectedAccounts.filter(
+        a => !(a.id === account.id && a.platform === account.platform)
+      ));
+    } else {
+      onSelect([...selectedAccounts, account]);
+    }
+  };
+
+  const isAccountSelected = (account) => {
+    return selectedAccounts.some(
+      a => a.id === account.id && a.platform === account.platform
+    );
+  };
+
+  if (allAccounts.length === 0) {
+    return (
+      <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+          <Store size={18} className="text-muted-foreground" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-muted-foreground">{t("no_account_connected")}</p>
+          <p className="text-xs text-muted-foreground">{t("connect_account_first")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <label className="text-xs font-semibold text-foreground uppercase tracking-wider mb-2 block">
+        {t("select_accounts")}
+      </label>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+      >
+        {selectedAccounts.length > 0 ? (
+          <>
+            <div className="flex -space-x-2">
+              {selectedAccounts.slice(0, 3).map((account, idx) => (
+                <div key={`${account.platform}-${account.id}`} className="w-10 h-10 rounded-lg overflow-hidden border-2 border-card shrink-0">
+                  <img
+                    src={account.platform === "vinted" ? "/vinted.jpeg" : "/ebay.png"}
+                    className="w-full h-full object-cover"
+                    alt={account.platform}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-medium">
+                {selectedAccounts.length === 1
+                  ? selectedAccounts[0].username
+                  : `${selectedAccounts.length} ${t("accounts_selected")}`
+                }
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {selectedAccounts.map(a => a.platform).join(", ")}
+              </p>
+            </div>
+            <ChevronDown size={16} className={`text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          </>
+        ) : (
+          <>
+            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+              <Store size={18} className="text-muted-foreground" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-medium text-muted-foreground">{t("choose_accounts")}</p>
+            </div>
+            <ChevronDown size={16} className={`text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          </>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full mt-2 w-full bg-card border border-border rounded-xl shadow-lg overflow-hidden z-10 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="p-3 border-b border-border">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              {t("select_platforms")}
+            </p>
+          </div>
+          {allAccounts.map((account) => {
+            const isSelected = isAccountSelected(account);
+            return (
+              <button
+                key={`${account.platform}-${account.id}`}
+                onClick={() => toggleAccount(account)}
+                className={`w-full p-4 flex items-center gap-3 hover:bg-muted/50 transition-colors border-b border-border last:border-0 ${isSelected ? "bg-primary/5" : ""
+                  }`}
+              >
+                <div className="w-10 h-10 rounded-lg overflow-hidden border border-border shrink-0">
+                  <img
+                    src={account.platform === "vinted" ? "/vinted.jpeg" : "/ebay.png"}
+                    className="w-full h-full object-cover"
+                    alt={account.platform}
+                  />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium">{account.username}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{account.platform}</p>
+                </div>
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected
+                  ? "bg-primary border-primary"
+                  : "border-border"
+                  }`}>
+                  {isSelected && (
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
