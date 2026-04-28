@@ -2,6 +2,7 @@
   "sidebar": {
     "publish": "Publish with AI",
     "dashboard": "Dashboard",
+    "listings": "My listings",
     "messages": "Messages",
     "connections": "Connections",
     "logout": "Sign out",
@@ -75,7 +76,8 @@
     "select_platforms": "Select platforms",
     "no_account_connected": "No account connected",
     "connect_account_first": "Connect a Vinted or eBay account to publish",
-    "select_account_to_generate": "Please select at least one account to generate your listing"
+    "select_account_to_generate": "Please select at least one account to generate your listing",
+    "publish_success": "Publication successfully started!"
   },
   "connections": {
     "title": "Connections",
@@ -121,5 +123,12 @@
   "messages_page": {
     "title": "Messages",
     "subtitle": "Manage your messages."
+  },
+  "listings": {
+    "title": "My listings",
+    "subtitle": "Track the status of your publications.",
+    "empty_title": "No listings yet",
+    "empty_subtitle": "Publish your first item with AI.",
+    "publish_first": "Publish an item"
   }
 }

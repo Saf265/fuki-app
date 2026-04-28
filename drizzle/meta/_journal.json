@@ -8,6 +8,27 @@
       "when": 1777323173024,
       "tag": "0000_blushing_blacklash",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777387400601,
+      "tag": "0001_jazzy_yellow_claw",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777399010122,
+      "tag": "0002_productive_gravity",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777399261746,
+      "tag": "0003_sturdy_enchantress",
+      "breakpoints": true
     }
   ]
 }

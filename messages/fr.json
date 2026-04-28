@@ -2,6 +2,7 @@
   "sidebar": {
     "publish": "Publier avec l'IA",
     "dashboard": "Tableau de bord",
+    "listings": "Mes annonces",
     "messages": "Messagerie",
     "connections": "Connexions",
     "logout": "Se déconnecter",
@@ -75,7 +76,8 @@
     "select_platforms": "Sélectionnez les plateformes",
     "no_account_connected": "Aucun compte connecté",
     "connect_account_first": "Connectez un compte Vinted ou eBay pour publier",
-    "select_account_to_generate": "Veuillez sélectionner au moins un compte pour générer votre annonce"
+    "select_account_to_generate": "Veuillez sélectionner au moins un compte pour générer votre annonce",
+    "publish_success": "Publication lancée avec succès !"
   },
   "connections": {
     "title": "Connexions",
@@ -121,5 +123,12 @@
   "messages_page": {
     "title": "Messagerie",
     "subtitle": "Gérez vos messages."
+  },
+  "listings": {
+    "title": "Mes annonces",
+    "subtitle": "Suivez l'état de vos publications.",
+    "empty_title": "Aucune annonce publiée",
+    "empty_subtitle": "Publiez votre premier article avec l'IA.",
+    "publish_first": "Publier un article"
   }
 }

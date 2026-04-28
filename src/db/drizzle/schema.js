@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, real, text, timestamp } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -141,8 +141,8 @@ export const vintedSessions = pgTable(
     userAgent: text("user_agent"),
     anonId: text("anon_id"),
     gaClientId: text("ga_client_id"),
-    domain: text("domain"),
 
+    domain: text("domain"),
     warmedUp: boolean("warmed_up").default(false).notNull(),
     warmedAt: timestamp("warmed_at"),
 
@@ -221,3 +221,109 @@ export const ebaySessionRelations = relations(ebaySessions, ({ one }) => ({
 export const userRelations = relations(users, ({ many }) => ({
   connectedAccounts: many(connectedAccounts),
 }));
+
+// ─── Publications ─────────────────────────────────────────────────────────────
+
+export const publications = pgTable(
+  "publications",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+
+    // Trigger.dev job ID
+    jobId: text("job_id"),
+
+    // Status: pending | running | success | partial | error
+    status: text("status").notNull().default("pending"),
+
+    // Product data
+    title: text("title").notNull(),
+    description: text("description"),
+    brand: text("brand"),
+    brandId: integer("brand_id"),
+    categoryPath: text("category_path"),
+    categoryId: integer("category_id"),
+    size: text("size"),
+    sizeId: integer("size_id"),
+    condition: text("condition"),
+    statusId: integer("status_id"),
+    colors: text("colors"),
+    colorIds: jsonb("color_ids"),      // integer[]
+    parcelSize: text("parcel_size"),
+    parcelSizeId: integer("parcel_size_id"),
+    isbn: text("isbn"),
+    isUnisex: boolean("is_unisex").default(false),
+    generatedCovers: jsonb("generated_covers"), // string[]
+    price: real("price").notNull(),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("pub_userId_idx").on(table.userId),
+    index("pub_status_idx").on(table.status),
+  ],
+);
+
+// ─── Publication per account (one row per platform targeted) ──────────────────
+
+export const publicationAccounts = pgTable(
+  "publication_accounts",
+  {
+    id: text("id").primaryKey(),
+    publicationId: text("publication_id")
+      .notNull()
+      .references(() => publications.id, { onDelete: "cascade" }),
+    connectedAccountId: text("connected_account_id")
+      .notNull()
+      .references(() => connectedAccounts.id, { onDelete: "cascade" }),
+
+    platform: text("platform").notNull(), // "vinted" | "ebay"
+    currency: text("currency").notNull(),
+    sku: text("sku"), // eBay only
+
+    // Status for this specific account: pending | success | error
+    status: text("status").notNull().default("pending"),
+    // Platform listing ID once published
+    platformListingId: text("platform_listing_id"),
+    // Error message if failed
+    errorMessage: text("error_message"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("pa_publicationId_idx").on(table.publicationId),
+    index("pa_connectedAccountId_idx").on(table.connectedAccountId),
+  ],
+);
+
+// ─── Publication relations ────────────────────────────────────────────────────
+
+export const publicationRelations = relations(publications, ({ one, many }) => ({
+  user: one(users, {
+    fields: [publications.userId],
+    references: [users.id],
+  }),
+  accounts: many(publicationAccounts),
+}));
+
+export const publicationAccountRelations = relations(publicationAccounts, ({ one }) => ({
+  publication: one(publications, {
+    fields: [publicationAccounts.publicationId],
+    references: [publications.id],
+  }),
+  connectedAccount: one(connectedAccounts, {
+    fields: [publicationAccounts.connectedAccountId],
+    references: [connectedAccounts.id],
+  }),
+}));
+

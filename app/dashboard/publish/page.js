@@ -8,7 +8,9 @@ import SizeSelect from "@/components/SizeSelect";
 import StatusSelect from "@/components/StatusSelect";
 import { ChevronDown, ImagePlus, Loader2, Sparkles, Store, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Sidebar } from "../page";
 
 const MAX_IMAGES = 6;
@@ -16,6 +18,7 @@ const MAX_IMAGES = 6;
 export default function Publish() {
   const t = useTranslations("publish");
   const locale = useLocale();
+  const router = useRouter();
   const [images, setImages] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -107,16 +110,94 @@ export default function Publish() {
 
   const updateField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  const [publishing, setPublishing] = useState(false);
+  const [publishResult, setPublishResult] = useState(null);
+
   const handlePublish = async () => {
     console.log("=== PUBLISH BUTTON CLICKED ===");
-    console.log("Selected Accounts:", selectedAccounts);
-    console.log("Form Data:", form);
-    console.log("Hidden Fields (IDs):", hiddenFields);
-    console.log("Images:", images);
-    console.log("Generated Covers:", generatedCovers);
-    console.log("Locale:", locale);
 
-    // TODO: Implement actual publish logic
+    try {
+      setPublishing(true);
+      setPublishResult(null);
+
+      // Fetch session details for each selected account
+      const accountsWithSessions = await Promise.all(
+        selectedAccounts.map(async (account) => {
+          const res = await fetch(`/api/account-session?accountId=${account.id}&platform=${account.platform}`);
+          if (!res.ok) {
+            console.error(`Failed to fetch session for ${account.platform} account ${account.id}`);
+            return null;
+          }
+          const sessionData = await res.json();
+
+          // Build account data
+          const accountData = {
+            session_id: sessionData.session_id,
+            platform: account.platform,
+            currency: sessionData.currency,
+          };
+
+          // Generate SKU for eBay accounts
+          if (account.platform === "ebay") {
+            const randomSku = Math.random().toString(36).substring(2, 7).toUpperCase();
+            accountData.sku = `PROD-${randomSku}`;
+          }
+
+          return accountData;
+        })
+      );
+
+      // Filter out failed fetches
+      const accounts_selected = accountsWithSessions.filter(Boolean);
+
+      // Build the payload
+      const payload = {
+        accounts_selected,
+        global_products: {
+          title: form.title,
+          description: form.description,
+          brand: form.brand,
+          brand_id: hiddenFields.brand_id ? Number(hiddenFields.brand_id) : null,
+          category_path: form.category_path,
+          category_id: hiddenFields.category_id ? Number(hiddenFields.category_id) : null,
+          size: form.size,
+          size_id: hiddenFields.size_id ? Number(hiddenFields.size_id) : null,
+          condition: form.condition,
+          status_id: hiddenFields.status_id ? Number(hiddenFields.status_id) : null,
+          colors: form.colors,
+          color_ids: hiddenFields.color_ids?.map(Number) ?? [],
+          parcel_size: form.parcel_size,
+          parcel_size_id: hiddenFields.parcel_size_id ? Number(hiddenFields.parcel_size_id) : null,
+          isbn: form.isbn || null,
+          is_unisex: false,
+          generated_covers: generatedCovers,
+          price: form.price ? parseFloat(form.price) : 0,
+        }
+      };
+
+      console.log("=== PUBLISH PAYLOAD ===");
+      console.log(JSON.stringify(payload, null, 2));
+
+      // Trigger the background job
+      const res = await fetch("/api/publish/job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Erreur lors de la publication");
+
+      console.log("✅ Job triggered:", result.jobId);
+      toast.success(t("publish_success"));
+      router.push("/dashboard/listings");
+
+    } catch (error) {
+      console.error("Error publishing:", error);
+      toast.error(error.message);
+    } finally {
+      setPublishing(false);
+    }
   };
 
   // Fetch accounts on mount
@@ -472,11 +553,11 @@ export default function Publish() {
                 <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm border-t border-border pt-6 -mx-8 px-8 pb-8">
                   <button
                     onClick={handlePublish}
-                    disabled={selectedAccounts.length === 0}
+                    disabled={selectedAccounts.length === 0 || publishing}
                     className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02]"
                   >
-                    <Sparkles size={18} />
-                    {t("publish_btn")}
+                    {publishing ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                    {publishing ? t("generating") : t("publish_btn")}
                   </button>
                 </div>
               </div>
@@ -668,5 +749,6 @@ function AccountSelector({ accounts, selectedAccounts, onSelect, t }) {
     </div>
   );
 }
+
 
 

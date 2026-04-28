@@ -154,6 +154,7 @@ export function Sidebar({ active }) {
   const links = [
     { id: "publish", label: t("sidebar.publish"), icon: <Sparkles size={18} />, href: "/dashboard/publish", primary: true },
     { id: "dashboard", label: t("sidebar.dashboard"), icon: <LayoutDashboard size={18} />, href: "/dashboard" },
+    { id: "listings", label: t("sidebar.listings"), icon: <ShoppingBag size={18} />, href: "/dashboard/listings" },
     { id: "messages", label: t("sidebar.messages"), icon: <MessageSquare size={18} />, href: "/dashboard/messages" },
     { id: "connections", label: t("sidebar.connections"), icon: <Link2 size={18} />, href: "/dashboard/connections" },
   ];
