@@ -111,9 +111,29 @@ export default function Publish() {
   const updateField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const [publishing, setPublishing] = useState(false);
-  const [publishResult, setPublishResult] = useState(null);
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const e = {};
+    if (!form.title?.trim()) e.title = true;
+    if (!form.description?.trim()) e.description = true;
+    if (!hiddenFields.brand_id) e.brand = true;
+    if (!hiddenFields.status_id) e.condition = true;
+    if (!hiddenFields.category_id) e.category = true;
+    if (!hiddenFields.size_id) e.size = true;
+    if (!hiddenFields.color_ids?.length) e.colors = true;
+    if (!hiddenFields.parcel_size_id) e.parcel_size = true;
+    if (!form.price || parseFloat(form.price) <= 0) e.price = true;
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
   const handlePublish = async () => {
+    if (!validate()) {
+      toast.error(t("fill_required_fields"));
+      return;
+    }
+
     console.log("=== PUBLISH BUTTON CLICKED ===");
 
     try {
@@ -404,14 +424,15 @@ export default function Publish() {
                       <div className="w-1 h-5 bg-primary rounded-full"></div>
                       <h3 className="font-semibold">{t("sections.main_info")}</h3>
                     </div>
-                    <FormField label={t("fields.title")} value={form.title} onChange={(v) => updateField("title", v)} />
+                    <FormField label={t("fields.title")} value={form.title} onChange={(v) => { updateField("title", v); setErrors(p => ({ ...p, title: false })); }} error={errors.title} />
                   </div>
 
                   <FormField
                     label={t("fields.description")}
                     value={form.description}
-                    onChange={(v) => updateField("description", v)}
+                    onChange={(v) => { updateField("description", v); setErrors(p => ({ ...p, description: false })); }}
                     multiline
+                    error={errors.description}
                   />
                 </div>
 
@@ -424,72 +445,72 @@ export default function Publish() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
-                        {t("fields.brand")}
-                      </label>
+                      <FieldLabel label={t("fields.brand")} error={errors.brand} />
                       <BrandSelect
                         key={`brand-${locale}`}
                         brandId={hiddenFields.brand_id}
                         onChange={({ label, id }) => {
                           updateField("brand", label);
                           setHiddenFields((prev) => ({ ...prev, brand_id: String(id) }));
+                          setErrors(p => ({ ...p, brand: false }));
                         }}
+                        error={errors.brand}
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
-                        {t("fields.condition")}
-                      </label>
+                      <FieldLabel label={t("fields.condition")} error={errors.condition} />
                       <StatusSelect
                         key={`status-${locale}`}
                         statusId={hiddenFields.status_id}
                         onChange={({ label, id }) => {
                           updateField("condition", label);
                           setHiddenFields((prev) => ({ ...prev, status_id: String(id) }));
+                          setErrors(p => ({ ...p, condition: false }));
                         }}
+                        error={errors.condition}
                       />
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
-                      {t("fields.category")}
-                    </label>
+                    <FieldLabel label={t("fields.category")} error={errors.category} />
                     <CategorySelect
                       key={`category-${locale}`}
                       categoryId={hiddenFields.category_id ? Number(hiddenFields.category_id) : null}
                       onChange={({ path, id }) => {
                         updateField("category_path", path);
                         setHiddenFields((prev) => ({ ...prev, category_id: String(id) }));
+                        setErrors(p => ({ ...p, category: false }));
                       }}
+                      error={errors.category}
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
-                        {t("fields.size")}
-                      </label>
+                      <FieldLabel label={t("fields.size")} error={errors.size} />
                       <SizeSelect
                         key={`size-${locale}`}
                         sizeId={hiddenFields.size_id ? Number(hiddenFields.size_id) : null}
                         onChange={({ label, id }) => {
                           updateField("size", label);
                           setHiddenFields((prev) => ({ ...prev, size_id: String(id) }));
+                          setErrors(p => ({ ...p, size: false }));
                         }}
+                        error={errors.size}
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
-                        {t("fields.colors")}
-                      </label>
+                      <FieldLabel label={t("fields.colors")} error={errors.colors} />
                       <ColorSelect
                         key={`colors-${locale}`}
                         colorIds={hiddenFields.color_ids ?? []}
                         onChange={(colors) => {
                           updateField("colors", colors.map((c) => c.label).join(", "));
                           setHiddenFields((prev) => ({ ...prev, color_ids: colors.map((c) => c.id) }));
+                          setErrors(p => ({ ...p, colors: false }));
                         }}
+                        error={errors.colors}
                       />
                     </div>
                   </div>
@@ -504,35 +525,37 @@ export default function Publish() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
-                        {t("fields.price")}
-                      </label>
+                      <FieldLabel label={t("fields.price")} error={errors.price} />
                       <div className="relative">
                         <input
                           type="number"
                           step="0.01"
                           min="0"
                           value={form.price}
-                          onChange={(e) => updateField("price", e.target.value)}
+                          onChange={(e) => { updateField("price", e.target.value); setErrors(p => ({ ...p, price: false })); }}
                           placeholder="0.00"
-                          className="w-full bg-muted/40 border border-border rounded-xl pl-4 pr-12 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                          className={`w-full bg-muted/40 border rounded-xl pl-4 pr-12 py-3 text-sm font-medium focus:outline-none focus:ring-2 transition-all ${errors.price
+                            ? "border-red-500 focus:ring-red-500/30"
+                            : "border-border focus:ring-primary/30 focus:border-primary/50"
+                            }`}
                         />
                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
                           EUR
                         </span>
                       </div>
+                      {errors.price && <ErrorHint t={t} />}
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
-                        {t("fields.parcel_size")}
-                      </label>
+                      <FieldLabel label={t("fields.parcel_size")} error={errors.parcel_size} />
                       <PackageSizeSelect
                         key={`parcel-${locale}`}
                         parcelSizeId={hiddenFields.parcel_size_id}
                         onChange={({ label, id }) => {
                           updateField("parcel_size", label);
                           setHiddenFields((prev) => ({ ...prev, parcel_size_id: id }));
+                          setErrors(p => ({ ...p, parcel_size: false }));
                         }}
+                        error={errors.parcel_size}
                       />
                     </div>
                   </div>
@@ -590,16 +613,36 @@ function Dropzone({ onDrop, onDragOver, onDragLeave, isDragging, onFiles, t }) {
   );
 }
 
-function FormField({ label, value, onChange, multiline = false }) {
-  const base = "w-full bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all resize-none";
+function FormField({ label, value, onChange, multiline = false, error = false }) {
+  const base = `w-full bg-muted/40 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all resize-none ${error
+      ? "border-red-500 focus:ring-red-500/30"
+      : "border-border focus:ring-primary/30 focus:border-primary/50"
+    }`;
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-xs font-semibold text-foreground uppercase tracking-wider">{label}</label>
+    <div className="flex flex-col gap-1.5">
+      <FieldLabel label={label} error={error} />
       {multiline
         ? <textarea rows={5} value={value} onChange={(e) => onChange(e.target.value)} className={base} />
         : <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className={base} />
       }
+      {error && <ErrorHint />}
     </div>
+  );
+}
+
+function FieldLabel({ label, error }) {
+  return (
+    <label className={`text-xs font-semibold uppercase tracking-wider ${error ? "text-red-500" : "text-foreground"}`}>
+      {label} {error && <span className="normal-case font-normal">— requis</span>}
+    </label>
+  );
+}
+
+function ErrorHint() {
+  return (
+    <p className="text-xs text-red-500 flex items-center gap-1">
+      <span>⚠</span> Ce champ est requis
+    </p>
   );
 }
 

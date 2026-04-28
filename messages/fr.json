@@ -77,7 +77,8 @@
     "no_account_connected": "Aucun compte connecté",
     "connect_account_first": "Connectez un compte Vinted ou eBay pour publier",
     "select_account_to_generate": "Veuillez sélectionner au moins un compte pour générer votre annonce",
-    "publish_success": "Publication lancée avec succès !"
+    "publish_success": "Publication lancée avec succès !",
+    "fill_required_fields": "Veuillez remplir tous les champs requis"
   },
   "connections": {
     "title": "Connexions",

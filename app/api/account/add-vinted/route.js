@@ -26,7 +26,6 @@ export async function POST(req) {
       domain,
       vintedUserId,
       userAgent,
-      csrf_token,
       anon_id,
       cookie_header,
     } = await req.json();
@@ -36,8 +35,10 @@ export async function POST(req) {
     console.log("User ID from extension:", userId);
     console.log("Vinted User ID:", vintedUserId);
     console.log("Domain:", domain);
+    console.log("Vinted Anon ID:", anon_id);
+    console.log("Cookie Header:", cookie_header);
 
-    if (!vintedUsername || !access_token || !refresh_token || !domain || !userId) {
+    if (!vintedUsername || !access_token || !refresh_token || !domain || !userId || !anon_id || !cookie_header) {
       return NextResponse.json(
         { success: false, error: "Missing credentials" },
         { headers: corsHeaders },
@@ -79,7 +80,6 @@ export async function POST(req) {
           .set({
             accessToken: access_token,
             refreshToken: refresh_token,
-            csrfToken: csrf_token ?? null,
             cookieHeader: cookie_header ?? null,
             userAgent: userAgent ?? null,
             anonId: anon_id ?? null,
@@ -94,7 +94,6 @@ export async function POST(req) {
           connectedAccountId: accountId,
           accessToken: access_token,
           refreshToken: refresh_token,
-          csrfToken: csrf_token ?? null,
           cookieHeader: cookie_header ?? null,
           userAgent: userAgent ?? null,
           anonId: anon_id ?? null,
@@ -120,7 +119,6 @@ export async function POST(req) {
         connectedAccountId: accountId,
         accessToken: access_token,
         refreshToken: refresh_token,
-        csrfToken: csrf_token ?? null,
         cookieHeader: cookie_header ?? null,
         userAgent: userAgent ?? null,
         anonId: anon_id ?? null,
