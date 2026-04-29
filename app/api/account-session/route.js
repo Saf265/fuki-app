@@ -21,21 +21,6 @@ const VINTED_CURRENCY_MAP = {
   "vinted.se": "SEK",
 };
 
-// Currency mapping for eBay marketplaces
-const EBAY_CURRENCY_MAP = {
-  "EBAY_US": "USD",
-  "EBAY_GB": "GBP",
-  "EBAY_DE": "EUR",
-  "EBAY_FR": "EUR",
-  "EBAY_IT": "EUR",
-  "EBAY_ES": "EUR",
-  "EBAY_NL": "EUR",
-  "EBAY_BE": "EUR",
-  "EBAY_AT": "EUR",
-  "EBAY_CA": "CAD",
-  "EBAY_AU": "AUD",
-};
-
 export async function GET(request) {
   try {
     // Get authenticated user
@@ -67,52 +52,27 @@ export async function GET(request) {
       return NextResponse.json({ error: "Account not found" }, { status: 404 });
     }
 
-    let sessionData;
-    let currency;
-
-    if (platform === "vinted") {
-      // Fetch Vinted session
-      const vintedSession = await db.query.vintedSessions.findFirst({
-        where: (vs, { eq }) => eq(vs.connectedAccountId, accountId),
-      });
-
-      if (!vintedSession) {
-        return NextResponse.json({ error: "Vinted session not found" }, { status: 404 });
-      }
-
-      // Determine currency from domain
-      currency = VINTED_CURRENCY_MAP[vintedSession.domain] || "EUR";
-
-      sessionData = {
-        session_id: vintedSession.id,
-        platform: "vinted",
-        currency,
-        domain: vintedSession.domain,
-      };
-    } else if (platform === "ebay") {
-      // Fetch eBay session
-      const ebaySession = await db.query.ebaySessions.findFirst({
-        where: (es, { eq }) => eq(es.connectedAccountId, accountId),
-      });
-
-      if (!ebaySession) {
-        return NextResponse.json({ error: "eBay session not found" }, { status: 404 });
-      }
-
-      // Determine currency from marketplaceId
-      currency = EBAY_CURRENCY_MAP[ebaySession.marketplaceId] || "USD";
-
-      sessionData = {
-        session_id: ebaySession.id,
-        platform: "ebay",
-        currency,
-        marketplaceId: ebaySession.marketplaceId,
-      };
-    } else {
+    if (platform !== "vinted") {
       return NextResponse.json({ error: "Invalid platform" }, { status: 400 });
     }
 
-    return NextResponse.json(sessionData);
+    // Fetch Vinted session
+    const vintedSession = await db.query.vintedSessions.findFirst({
+      where: (vs, { eq }) => eq(vs.connectedAccountId, accountId),
+    });
+
+    if (!vintedSession) {
+      return NextResponse.json({ error: "Vinted session not found" }, { status: 404 });
+    }
+
+    const currency = VINTED_CURRENCY_MAP[vintedSession.domain] || "EUR";
+
+    return NextResponse.json({
+      session_id: vintedSession.id,
+      platform: "vinted",
+      currency,
+      domain: vintedSession.domain,
+    });
   } catch (error) {
     console.error("Account session fetch error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

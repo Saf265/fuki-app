@@ -21,16 +21,10 @@ export async function GET(request) {
       .where(eq(connectedAccounts.userId, userId));
 
     const vinted = userAccounts.filter((a) => a.platform === "vinted");
-    const ebay = userAccounts.filter((a) => a.platform === "ebay");
 
     return NextResponse.json({
       connections: {
         vinted: vinted.map((a) => ({
-          id: a.id,
-          username: a.username,
-          connectedAt: a.createdAt?.toLocaleDateString?.("fr-FR") ?? null,
-        })),
-        ebay: ebay.map((a) => ({
           id: a.id,
           username: a.username,
           connectedAt: a.createdAt?.toLocaleDateString?.("fr-FR") ?? null,
@@ -72,7 +66,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "Account not found" }, { status: 404 });
     }
 
-    // Cascade supprime aussi vintedSessions / ebaySessions
+    // Cascade supprime aussi vintedSessions
     await db.delete(connectedAccounts).where(eq(connectedAccounts.id, id));
 
     return NextResponse.json({ success: true });

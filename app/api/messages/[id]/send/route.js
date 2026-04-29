@@ -1,7 +1,6 @@
 import { db } from "@/src/db/drizzle/index";
-import { connectedAccounts, ebaySessions, vintedSessions } from "@/src/db/drizzle/schema";
+import { connectedAccounts, vintedSessions } from "@/src/db/drizzle/schema";
 import { auth } from "@/src/lib/auth";
-import { getValidEbayToken } from "@/src/lib/ebay";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -26,87 +25,14 @@ export async function POST(request, { params }) {
     console.log("User ID:", userId);
 
     const body = await request.json();
-    const { accountId, text, photo_url, offer_price, platform } = body;
-    console.log("Request body:", { accountId, hasText: !!text, hasPhoto: !!photo_url, hasOffer: offer_price !== undefined, platform });
+    const { accountId, text, photo_url, offer_price } = body;
+    console.log("Request body:", { accountId, hasText: !!text, hasPhoto: !!photo_url, hasOffer: offer_price !== undefined });
 
     if (!accountId) {
       return NextResponse.json({ error: "accountId manquant" }, { status: 400 });
     }
 
-    // ─── Handle eBay message ──────────────────────────────────────────────────
-    if (platform === "ebay") {
-      console.log("Sending eBay message...");
-
-      // Get eBay account
-      const [account] = await db
-        .select({
-          accountId: connectedAccounts.id,
-          username: connectedAccounts.username,
-          platformUserId: connectedAccounts.platformUserId,
-        })
-        .from(connectedAccounts)
-        .innerJoin(ebaySessions, eq(ebaySessions.connectedAccountId, connectedAccounts.id))
-        .where(eq(connectedAccounts.id, accountId))
-        .limit(1);
-
-      if (!account) {
-        console.error("eBay account not found");
-        return NextResponse.json({ error: "Compte eBay introuvable" }, { status: 404 });
-      }
-
-      console.log("eBay account found:", account.username);
-
-      // Get valid token
-      const token = await getValidEbayToken(account.accountId);
-      console.log("Got valid eBay token");
-
-      // Prepare payload
-      const payload = {
-        conversationId: conversationId,
-        messageText: text?.trim() || "",
-      };
-
-      // Add media if photo_url is provided
-      if (photo_url?.trim()) {
-        payload.messageMedia = [{
-          mediaUrl: photo_url.trim(),
-          mediaType: "IMAGE",
-          mediaName: "image.jpg",
-        }];
-      }
-
-      console.log("eBay send_message payload:", JSON.stringify(payload, null, 2));
-
-      // Send message to eBay API
-      const url = "https://api.sandbox.ebay.com/commerce/message/v1/send_message";
-      console.log("eBay API URL:", url);
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(10000),
-      });
-
-      console.log("eBay API response status:", res.status);
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("eBay API error:", errorText);
-        throw new Error(`eBay API error ${res.status}: ${errorText}`);
-      }
-
-      const data = await res.json();
-      console.log("eBay API raw response:", JSON.stringify(data, null, 2));
-      console.log("✅ eBay message sent, messageId:", data.messageId);
-
-      return NextResponse.json(data);
-    }
-
-    // ─── Handle Vinted message (default) ──────────────────────────────────────
+    // ─── Handle Vinted message ─────────────────────────────────────────────────
     console.log("Sending Vinted message...");
 
     const [account] = await db

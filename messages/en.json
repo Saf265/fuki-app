@@ -14,12 +14,11 @@
     "subtitle": "Welcome to Fuki.",
     "stats": {
       "connected": "Connected accounts",
-      "ebay": "eBay connected",
       "vinted": "Vinted connected"
     },
     "cta": {
       "title": "Start automating",
-      "description": "Connect your Vinted and eBay accounts to start automating your listings.",
+      "description": "Connect your Vinted accounts to start automating your listings.",
       "button": "Connect an account"
     }
   },
@@ -75,32 +74,26 @@
     "accounts_selected": "accounts selected",
     "select_platforms": "Select platforms",
     "no_account_connected": "No account connected",
-    "connect_account_first": "Connect a Vinted or eBay account to publish",
+    "connect_account_first": "Connect a Vinted account to publish",
     "select_account_to_generate": "Please select at least one account to generate your listing",
     "publish_success": "Publication successfully started!",
     "fill_required_fields": "Please fill in all required fields"
   },
   "connections": {
     "title": "Connections",
-    "subtitle": "Manage your Vinted and eBay merchant accounts.",
+    "subtitle": "Manage your Vinted merchant accounts.",
     "accounts_connected": "account connected",
     "accounts_connected_plural": "accounts connected",
     "vinted": "Vinted",
-    "ebay": "eBay",
     "vinted_desc": "Sell your items on Vinted",
-    "ebay_desc": "Sell your items on eBay",
     "add": "Add",
     "no_accounts": "No accounts connected",
     "connected_on": "Connected on",
     "modal": {
       "connect_vinted": "Connect Vinted",
-      "connect_ebay": "Connect eBay",
       "vinted_subtitle": "Via Fuki extension",
-      "ebay_subtitle": "Secure connection in seconds",
       "vinted_desc": "Vinted will open in a new tab. Sign in to your account and the Fuki extension will sync everything automatically.",
-      "ebay_desc": "You will be redirected to eBay to securely connect your store.",
       "open_vinted": "Open Vinted",
-      "connect_ebay_btn": "Connect my eBay account",
       "cancel": "Cancel",
       "waiting": "Waiting for connection",
       "waiting_desc": "Sign in to Vinted in the opened tab, then come back here. Fuki will detect the connection automatically."
@@ -124,6 +117,29 @@
   "messages_page": {
     "title": "Messages",
     "subtitle": "Manage your messages."
+  },
+  "message_settings": {
+    "title": "Message settings",
+    "subtitle": "Configure your automatic replies and preferences.",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Settings saved!",
+    "error_save": "Error while saving.",
+    "error_empty_message": "Message cannot be empty.",
+    "favorite_reply": {
+      "title": "Favorite follow-up",
+      "subtitle": "Automatically send a message to people who add your item to their favorites.",
+      "enable": "Enable",
+      "disable": "Disable",
+      "active": "Active",
+      "inactive": "Inactive",
+      "message_label": "Follow-up message",
+      "message_placeholder": "Write your follow-up message…",
+      "message_hint": "This message will be sent automatically to each new favorite.",
+      "reset_default": "Reset to default",
+      "preview": "Preview",
+      "disabled_hint": "Enable this option to automatically send a message to people who add your item to their favorites."
+    }
   },
   "listings": {
     "title": "My listings",

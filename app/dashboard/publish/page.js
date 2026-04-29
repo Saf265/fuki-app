@@ -26,7 +26,7 @@ export default function Publish() {
   const [hiddenFields, setHiddenFields] = useState({});
   const [generatedCovers, setGeneratedCovers] = useState([]);
   const [error, setError] = useState(null);
-  const [accounts, setAccounts] = useState({ vinted: [], ebay: [] });
+  const [accounts, setAccounts] = useState({ vinted: [] });
   const [selectedAccounts, setSelectedAccounts] = useState([]);
 
   const handleFiles = (files) => {
@@ -156,12 +156,6 @@ export default function Publish() {
             platform: account.platform,
             currency: sessionData.currency,
           };
-
-          // Generate SKU for eBay accounts
-          if (account.platform === "ebay") {
-            const randomSku = Math.random().toString(36).substring(2, 7).toUpperCase();
-            accountData.sku = `PROD-${randomSku}`;
-          }
 
           return accountData;
         })
@@ -342,7 +336,7 @@ export default function Publish() {
                     <div key={`${account.platform}-${account.id}`} className="bg-card border border-border rounded-lg p-3 flex items-center gap-3">
                       <div className="w-9 h-9 rounded-lg overflow-hidden border border-border shrink-0">
                         <img
-                          src={account.platform === "vinted" ? "/vinted.jpeg" : "/ebay.png"}
+                          src="/vinted.jpeg"
                           className="w-full h-full object-cover"
                           alt={account.platform}
                         />
@@ -615,8 +609,8 @@ function Dropzone({ onDrop, onDragOver, onDragLeave, isDragging, onFiles, t }) {
 
 function FormField({ label, value, onChange, multiline = false, error = false }) {
   const base = `w-full bg-muted/40 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all resize-none ${error
-      ? "border-red-500 focus:ring-red-500/30"
-      : "border-border focus:ring-primary/30 focus:border-primary/50"
+    ? "border-red-500 focus:ring-red-500/30"
+    : "border-border focus:ring-primary/30 focus:border-primary/50"
     }`;
   return (
     <div className="flex flex-col gap-1.5">
@@ -652,7 +646,6 @@ function AccountSelector({ accounts, selectedAccounts, onSelect, t }) {
 
   const allAccounts = [
     ...accounts.vinted.map(a => ({ ...a, platform: "vinted" })),
-    ...accounts.ebay.map(a => ({ ...a, platform: "ebay" }))
   ];
 
   useEffect(() => {
@@ -714,7 +707,7 @@ function AccountSelector({ accounts, selectedAccounts, onSelect, t }) {
               {selectedAccounts.slice(0, 3).map((account, idx) => (
                 <div key={`${account.platform}-${account.id}`} className="w-10 h-10 rounded-lg overflow-hidden border-2 border-card shrink-0">
                   <img
-                    src={account.platform === "vinted" ? "/vinted.jpeg" : "/ebay.png"}
+                    src="/vinted.jpeg"
                     className="w-full h-full object-cover"
                     alt={account.platform}
                   />
@@ -765,7 +758,7 @@ function AccountSelector({ accounts, selectedAccounts, onSelect, t }) {
               >
                 <div className="w-10 h-10 rounded-lg overflow-hidden border border-border shrink-0">
                   <img
-                    src={account.platform === "vinted" ? "/vinted.jpeg" : "/ebay.png"}
+                    src="/vinted.jpeg"
                     className="w-full h-full object-cover"
                     alt={account.platform}
                   />

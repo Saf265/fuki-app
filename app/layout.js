@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Fuki | Automated Vinted & eBay Posting",
-  description: "The ultimate automation tool for Vinted and eBay sellers.",
+  title: "Fuki | Automated Vinted Posting",
+  description: "The ultimate automation tool for Vinted sellers.",
 };
 
 export default async function RootLayout({ children }) {

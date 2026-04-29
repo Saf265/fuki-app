@@ -4,8 +4,11 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   AlertCircle, ChevronLeft, ChevronRight, Image,
-  Loader2, MessageSquare, RefreshCw, Send, ShoppingBag, Tag, X,
+  Loader2, MessageSquare, RefreshCw, Send,
+  Settings,
+  ShoppingBag, Tag, X
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Sidebar } from "../page";
 
@@ -18,7 +21,7 @@ export default function Messages() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [platformFilter, setPlatformFilter] = useState("all"); // "all", "vinted", "ebay"
+  const [platformFilter, setPlatformFilter] = useState("all"); // "all", "vinted"
   // page courante par accountId
   const [currentPages, setCurrentPages] = useState({});
   // données paginées par accountId : { [accountId]: { [page]: conv[] } }
@@ -26,6 +29,8 @@ export default function Messages() {
   const [hasMorePages, setHasMorePages] = useState({});
   // Cache des messages par conversation : { [conv_id]: conversationData }
   const [messagesCache, setMessagesCache] = useState({});
+
+  const router = useRouter();
 
   const fetchPage = useCallback(async (page) => {
     try {
@@ -53,7 +58,7 @@ export default function Messages() {
         setAccounts(incoming.map((a) => ({
           accountId: a.accountId,
           username: a.username,
-          platform: a.platform // "vinted" ou "ebay"
+          platform: a.platform // "vinted"
         })));
         setSelectedAccount((s) => s ?? incoming[0]?.accountId ?? null);
         setCurrentPages((prev) => {
@@ -124,48 +129,24 @@ export default function Messages() {
               )}
             </div>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing || isLoading}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors disabled:opacity-40"
-          >
-            <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
-          </button>
-        </div>
-
-        {/* Platform filter */}
-        <div className="px-6 py-3 border-b border-border shrink-0 flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Plateforme:</span>
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1">
             <button
-              onClick={() => setPlatformFilter("all")}
-              className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${platformFilter === "all"
-                ? "bg-primary text-white"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-                }`}
+              onClick={() => router.push("/dashboard/messages/settings")}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              title="Paramètres de messagerie"
             >
-              Toutes
+              <Settings size={15} />
             </button>
             <button
-              onClick={() => setPlatformFilter("vinted")}
-              className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${platformFilter === "vinted"
-                ? "bg-primary text-white"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-                }`}
+              onClick={handleRefresh}
+              disabled={isRefreshing || isLoading}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors disabled:opacity-40"
             >
-              Vinted
-            </button>
-            <button
-              onClick={() => setPlatformFilter("ebay")}
-              className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${platformFilter === "ebay"
-                ? "bg-primary text-white"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              eBay
+              <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
             </button>
           </div>
         </div>
+
 
         {/* Account tabs */}
         {accounts.filter(a => platformFilter === "all" || a.platform === platformFilter).length > 1 && (
@@ -730,8 +711,7 @@ function MessageInput({ conversationId, accountId, allowReply, userSide, transac
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
-  const isEbay = platform === "ebay";
-  const canOffer = !isEbay && transaction != null && !transaction?.item_is_closed;
+  const canOffer = transaction != null && !transaction?.item_is_closed;
   const referencePrice = transaction?.offer_price?.amount
     ? parseFloat(transaction.offer_price.amount)
     : null;

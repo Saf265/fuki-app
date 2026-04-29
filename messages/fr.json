@@ -14,12 +14,11 @@
     "subtitle": "Bienvenue sur Fuki.",
     "stats": {
       "connected": "Comptes connectés",
-      "ebay": "eBay connectés",
       "vinted": "Vinted connectés"
     },
     "cta": {
       "title": "Commencer à automatiser",
-      "description": "Connectez vos comptes Vinted et eBay pour démarrer l'automatisation de vos annonces.",
+      "description": "Connectez vos comptes Vinted pour démarrer l'automatisation de vos annonces.",
       "button": "Connecter un compte"
     }
   },
@@ -75,32 +74,26 @@
     "accounts_selected": "comptes sélectionnés",
     "select_platforms": "Sélectionnez les plateformes",
     "no_account_connected": "Aucun compte connecté",
-    "connect_account_first": "Connectez un compte Vinted ou eBay pour publier",
+    "connect_account_first": "Connectez un compte Vinted pour publier",
     "select_account_to_generate": "Veuillez sélectionner au moins un compte pour générer votre annonce",
     "publish_success": "Publication lancée avec succès !",
     "fill_required_fields": "Veuillez remplir tous les champs requis"
   },
   "connections": {
     "title": "Connexions",
-    "subtitle": "Gérez vos comptes marchands Vinted et eBay.",
+    "subtitle": "Gérez vos comptes marchands Vinted.",
     "accounts_connected": "compte connecté",
     "accounts_connected_plural": "comptes connectés",
     "vinted": "Vinted",
-    "ebay": "eBay",
     "vinted_desc": "Vendez vos articles sur Vinted",
-    "ebay_desc": "Vendez vos articles sur eBay",
     "add": "Ajouter",
     "no_accounts": "Aucun compte connecté",
     "connected_on": "Connecté le",
     "modal": {
       "connect_vinted": "Connecter Vinted",
-      "connect_ebay": "Connecter eBay",
       "vinted_subtitle": "Via l'extension Fuki",
-      "ebay_subtitle": "Connexion sécurisée en quelques secondes",
       "vinted_desc": "Vinted va s'ouvrir dans un nouvel onglet. Connectez-vous à votre compte et l'extension Fuki synchronisera tout automatiquement.",
-      "ebay_desc": "Vous allez être redirigé vers eBay pour connecter votre boutique en toute sécurité.",
       "open_vinted": "Ouvrir Vinted",
-      "connect_ebay_btn": "Connecter mon compte eBay",
       "cancel": "Annuler",
       "waiting": "En attente de connexion",
       "waiting_desc": "Connectez-vous sur Vinted dans l'onglet ouvert, puis revenez ici. Fuki détectera la connexion automatiquement."
@@ -124,6 +117,29 @@
   "messages_page": {
     "title": "Messagerie",
     "subtitle": "Gérez vos messages."
+  },
+  "message_settings": {
+    "title": "Paramètres de messagerie",
+    "subtitle": "Configurez vos réponses automatiques et préférences.",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saved": "Paramètres enregistrés !",
+    "error_save": "Erreur lors de l'enregistrement.",
+    "error_empty_message": "Le message ne peut pas être vide.",
+    "favorite_reply": {
+      "title": "Relance favoris",
+      "subtitle": "Envoyez automatiquement un message aux personnes qui mettent votre article en favori.",
+      "enable": "Activer",
+      "disable": "Désactiver",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "message_label": "Message de relance",
+      "message_placeholder": "Écrivez votre message de relance…",
+      "message_hint": "Ce message sera envoyé automatiquement à chaque nouveau favori.",
+      "reset_default": "Remettre par défaut",
+      "preview": "Aperçu",
+      "disabled_hint": "Activez cette option pour envoyer automatiquement un message aux personnes qui ajoutent votre article en favori."
+    }
   },
   "listings": {
     "title": "Mes annonces",

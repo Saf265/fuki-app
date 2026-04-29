@@ -11,8 +11,7 @@ import {
   LogOut,
   MessageSquare,
   ShoppingBag,
-  Sparkles,
-  Store,
+  Sparkles
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -20,7 +19,7 @@ import { useEffect, useState } from "react";
 
 export default function Dashboard() {
   const t = useTranslations();
-  const [counts, setCounts] = useState({ vinted: 0, ebay: 0, total: 0 });
+  const [counts, setCounts] = useState({ vinted: 0, total: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -30,8 +29,7 @@ export default function Dashboard() {
         if (res.ok) {
           const data = await res.json();
           const v = data.connections?.vinted?.length || 0;
-          const e = data.connections?.ebay?.length || 0;
-          setCounts({ vinted: v, ebay: e, total: v + e });
+          setCounts({ vinted: v, total: v });
         }
       } catch (err) {
         console.error("Failed to fetch dashboard stats:", err);
@@ -61,18 +59,12 @@ export default function Dashboard() {
         </div>
 
         <div className="p-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
             <StatCard
               label={t("dashboard.stats.connected")}
               value={isLoading ? <Loader2 size={18} className="animate-spin text-primary" /> : counts.total.toString()}
               icon={<Link2 size={16} />}
               color="indigo"
-            />
-            <StatCard
-              label={t("dashboard.stats.ebay")}
-              value={isLoading ? <Loader2 size={18} className="animate-spin text-primary" /> : counts.ebay.toString()}
-              icon={<Store size={16} />}
-              color="blue"
             />
             <StatCard
               label={t("dashboard.stats.vinted")}

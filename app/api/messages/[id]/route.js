@@ -1,7 +1,6 @@
 import { db } from "@/src/db/drizzle/index";
-import { connectedAccounts, ebaySessions, vintedSessions } from "@/src/db/drizzle/schema";
+import { connectedAccounts, vintedSessions } from "@/src/db/drizzle/schema";
 import { auth } from "@/src/lib/auth";
-import { getValidEbayToken } from "@/src/lib/ebay";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -13,11 +12,9 @@ export async function GET(request, { params }) {
   const { id: conversationId } = await params;
   const { searchParams } = new URL(request.url);
   const accountId = searchParams.get("accountId");
-  const platform = searchParams.get("platform") || "vinted"; // Default to vinted for backward compatibility
 
   console.log("Conversation ID:", conversationId);
   console.log("Account ID:", accountId);
-  console.log("Platform:", platform);
 
   if (!conversationId) {
     return NextResponse.json({ error: "conversation_id manquant" }, { status: 400 });
@@ -35,97 +32,7 @@ export async function GET(request, { params }) {
     const userId = session.user.id;
     console.log("User ID:", userId);
 
-    // ─── Handle eBay messages ─────────────────────────────────────────────────
-    if (platform === "ebay") {
-      console.log("Fetching eBay messages...");
-
-      // Get the eBay account
-      const [account] = await db
-        .select({
-          accountId: connectedAccounts.id,
-          username: connectedAccounts.username,
-        })
-        .from(connectedAccounts)
-        .innerJoin(ebaySessions, eq(ebaySessions.connectedAccountId, connectedAccounts.id))
-        .where(
-          accountId
-            ? eq(connectedAccounts.id, accountId)
-            : eq(connectedAccounts.userId, userId)
-        )
-        .limit(1);
-
-      if (!account) {
-        console.error("eBay account not found");
-        return NextResponse.json({ error: "Compte eBay introuvable" }, { status: 404 });
-      }
-
-      console.log("eBay account found:", account.username);
-
-      // Get valid token (will refresh if needed)
-      const token = await getValidEbayToken(account.accountId);
-      console.log("Got valid eBay token");
-
-      // Fetch messages from eBay API
-      const url = `https://api.sandbox.ebay.com/commerce/message/v1/conversation/${conversationId}?conversation_type=FROM_MEMBERS`;
-      console.log("eBay API URL:", url);
-
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        signal: AbortSignal.timeout(10000),
-      });
-
-      console.log("eBay API response status:", res.status);
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("eBay API error:", errorText);
-        throw new Error(`eBay API error ${res.status}: ${errorText}`);
-      }
-
-      const data = await res.json();
-      console.log("eBay API raw response:", JSON.stringify(data, null, 2));
-      console.log("eBay messages count:", data.messages?.length || 0);
-
-      // Transform eBay response to include all fields
-      const transformedData = {
-        conversationId: conversationId,
-        conversationStatus: data.conversationStatus,
-        conversationTitle: data.conversationTitle,
-        conversationType: data.conversationType,
-        messages: (data.messages || []).map(msg => ({
-          messageId: msg.messageId,
-          messageBody: msg.messageBody,
-          subject: msg.subject,
-          createdDate: msg.createdDate,
-          senderUsername: msg.senderUsername,
-          recipientUsername: msg.recipientUsername,
-          readStatus: msg.readStatus,
-          messageMedia: msg.messageMedia || [],
-
-          // For compatibility with Vinted format
-          id: msg.messageId,
-          body: msg.messageBody,
-          created_at: msg.createdDate,
-          is_read: msg.readStatus,
-        })),
-        pagination: {
-          total: data.total,
-          limit: data.limit,
-          offset: data.offset,
-          next: data.next,
-          prev: data.prev,
-          href: data.href,
-        },
-        platform: "ebay",
-      };
-
-      return NextResponse.json(transformedData);
-    }
-
-    // ─── Handle Vinted messages (default) ─────────────────────────────────────
+    // ─── Handle Vinted messages ────────────────────────────────────────────────
     console.log("Fetching Vinted messages...");
 
     const [account] = await db

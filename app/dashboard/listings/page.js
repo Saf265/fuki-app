@@ -255,7 +255,7 @@ function DetailModal({ pub, onClose }) {
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg overflow-hidden border border-border">
                           <img
-                            src={acc.platform === "vinted" ? "/vinted.jpeg" : "/ebay.png"}
+                            src="/vinted.jpeg"
                             className="w-full h-full object-cover"
                             alt={acc.platform}
                           />

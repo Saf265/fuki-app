@@ -1,6 +1,6 @@
 import { db } from "@/src/db/drizzle/index";
 import { publications } from "@/src/db/drizzle/schema";
-import { getCurrencyFromDomain, getCurrencyFromMarketplace } from "@/src/lib/currency";
+import { getCurrencyFromDomain } from "@/src/lib/currency";
 import { logger, task } from "@trigger.dev/sdk/v3";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -9,7 +9,7 @@ import { z } from "zod";
 
 export const AccountSelectedSchema = z.object({
   session_id: z.string(),
-  platform: z.enum(["vinted", "ebay"]),
+  platform: z.enum(["vinted"]),
   currency: z.string(),
   sku: z.string().optional(),
 });
@@ -119,47 +119,6 @@ export const publishProductTask = task({
           },
         });
 
-      } else if (account.platform === "ebay") {
-        const ebaySession = await db.query.ebaySessions.findFirst({
-          where: (es, { eq: eqFn }) => eqFn(es.id, account.session_id),
-        });
-
-        if (!ebaySession) {
-          logger.error("eBay session not found", { session_id: account.session_id });
-          continue;
-        }
-
-        formattedPayloads.push({
-          ebay_session: {
-            access_token: ebaySession.accessToken,
-            refresh_token: ebaySession.refreshToken,
-            marketplace_id: ebaySession.marketplaceId,
-            payment_policy_id: ebaySession.paymentPolicyId,
-            fulfillment_policy_id: ebaySession.fulfillmentPolicyId,
-            return_policy_id: ebaySession.returnPolicyId,
-          },
-          product_data: {
-            title: global_products.title,
-            description: global_products.description,
-            brand: global_products.brand,
-            brand_id: global_products.brand_id,
-            category_path: global_products.category_path,
-            category_id: global_products.category_id,
-            size_id: global_products.size_id,
-            condition: global_products.condition,
-            status_id: global_products.status_id,
-            colors: global_products.colors,
-            color_ids: global_products.color_ids,
-            parcel_size: global_products.parcel_size,
-            package_size_id: global_products.parcel_size_id,
-            isbn: global_products.isbn,
-            is_unisex: global_products.is_unisex,
-            generated_covers: global_products.generated_covers,
-            price: global_products.price,
-            currency: getCurrencyFromMarketplace(ebaySession.marketplaceId),
-            sku: account.sku,
-          },
-        });
       }
     }
 
@@ -171,7 +130,6 @@ export const publishProductTask = task({
     // ─── TODO: send each payload to the respective API ────────────────────────
     // for (const p of formattedPayloads) {
     //   if (p.vinted_session) await publishToVinted(p);
-    //   if (p.ebay_session)   await publishToEbay(p);
     // }
 
     // ─── Update DB status ─────────────────────────────────────────────────────

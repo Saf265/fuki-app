@@ -99,7 +99,7 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }));
 
-// ─── Connected marketplace accounts (Vinted / eBay) ──────────────────────────
+// ─── Connected marketplace accounts (Vinted) ─────────────────────────────────
 
 export const connectedAccounts = pgTable(
   "connected_accounts",
@@ -108,7 +108,7 @@ export const connectedAccounts = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    platform: text("platform").notNull(), // "vinted" | "ebay"
+    platform: text("platform").notNull(), // "vinted"
     username: text("username"),
     platformUserId: text("platform_user_id").unique(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -155,35 +155,6 @@ export const vintedSessions = pgTable(
   (table) => [index("vs_connectedAccountId_idx").on(table.connectedAccountId)],
 );
 
-// ─── eBay session data ────────────────────────────────────────────────────────
-
-export const ebaySessions = pgTable(
-  "ebay_sessions",
-  {
-    id: text("id").primaryKey(),
-    connectedAccountId: text("connected_account_id")
-      .notNull()
-      .unique()
-      .references(() => connectedAccounts.id, { onDelete: "cascade" }),
-
-    accessToken: text("access_token"),
-    refreshToken: text("refresh_token"),
-    accessTokenExpiresAt: timestamp("access_token_expires_at"),
-    scope: text("scope"),
-    paymentPolicyId: text("payment_policy_id"),
-    fulfillmentPolicyId: text("fulfillment_policy_id"),
-    returnPolicyId: text("return_policy_id"),
-    marketplaceId: text("marketplace_id"),
-
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => new Date())
-      .notNull(),
-  },
-  (table) => [index("es_connectedAccountId_idx").on(table.connectedAccountId)],
-);
-
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const connectedAccountRelations = relations(
@@ -197,10 +168,6 @@ export const connectedAccountRelations = relations(
       fields: [connectedAccounts.id],
       references: [vintedSessions.connectedAccountId],
     }),
-    ebaySession: one(ebaySessions, {
-      fields: [connectedAccounts.id],
-      references: [ebaySessions.connectedAccountId],
-    }),
   }),
 );
 
@@ -211,15 +178,34 @@ export const vintedSessionRelations = relations(vintedSessions, ({ one }) => ({
   }),
 }));
 
-export const ebaySessionRelations = relations(ebaySessions, ({ one }) => ({
-  connectedAccount: one(connectedAccounts, {
-    fields: [ebaySessions.connectedAccountId],
-    references: [connectedAccounts.id],
-  }),
-}));
-
 export const userRelations = relations(users, ({ many }) => ({
   connectedAccounts: many(connectedAccounts),
+}));
+
+// ─── Message settings (per user) ─────────────────────────────────────────────
+
+export const messageSettings = pgTable("message_settings", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  favoriteReplyEnabled: boolean("favorite_reply_enabled").default(false).notNull(),
+  favoriteReplyMessage: text("favorite_reply_message")
+    .default("Bonjour ! Merci pour votre favori 😊 N'hésitez pas si vous avez des questions ou souhaitez faire une offre !")
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const messageSettingsRelations = relations(messageSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [messageSettings.userId],
+    references: [users.id],
+  }),
 }));
 
 // ─── Publications ─────────────────────────────────────────────────────────────
@@ -283,9 +269,9 @@ export const publicationAccounts = pgTable(
       .notNull()
       .references(() => connectedAccounts.id, { onDelete: "cascade" }),
 
-    platform: text("platform").notNull(), // "vinted" | "ebay"
+    platform: text("platform").notNull(), // "vinted"
     currency: text("currency").notNull(),
-    sku: text("sku"), // eBay only
+    sku: text("sku"), // kept for schema compatibility
 
     // Status for this specific account: pending | success | error
     status: text("status").notNull().default("pending"),

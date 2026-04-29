@@ -7,7 +7,6 @@ import {
   Loader2,
   Plus,
   ShoppingBag,
-  Store,
   Trash2,
   X,
 } from "lucide-react";
@@ -18,7 +17,7 @@ import { Sidebar } from "../page";
 
 export default function Connections() {
   const t = useTranslations("connections");
-  const [accounts, setAccounts] = useState({ vinted: [], ebay: [] });
+  const [accounts, setAccounts] = useState({ vinted: [] });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPlatform, setCurrentPlatform] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
@@ -55,11 +54,6 @@ export default function Connections() {
       setIsConnecting(false);
       toast.error(t("toast.token_error"));
     }
-  };
-
-  const handleEbayConnect = () => {
-    setIsConnecting(true);
-    window.location.href = "/api/ebay/login";
   };
 
   const fetchAccounts = async (silent = false) => {
@@ -130,7 +124,7 @@ export default function Connections() {
     }
   };
 
-  const totalAccounts = accounts.vinted.length + accounts.ebay.length;
+  const totalAccounts = accounts.vinted.length;
 
   return (
     <div className="flex min-h-screen bg-background text-foreground font-sans">
@@ -163,14 +157,10 @@ export default function Connections() {
                 <ShoppingBag size={13} className="text-primary" />
                 <span className="font-medium text-foreground">{accounts.vinted.length}</span> Vinted
               </span>
-              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Store size={13} className="text-primary" />
-                <span className="font-medium text-foreground">{accounts.ebay.length}</span> eBay
-              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
             <PlatformSection
               platform="vinted"
               label={t("vinted")}
@@ -179,16 +169,6 @@ export default function Connections() {
               accounts={accounts.vinted}
               onAdd={() => openModal("vinted")}
               onRemove={(id) => removeAccount({ id, platform: "vinted" })}
-              t={t}
-            />
-            <PlatformSection
-              platform="ebay"
-              label={t("ebay")}
-              icon={<Store size={18} />}
-              description={t("ebay_desc")}
-              accounts={accounts.ebay}
-              onAdd={() => openModal("ebay")}
-              onRemove={(id) => removeAccount({ id, platform: "ebay" })}
               t={t}
             />
           </div>
@@ -203,15 +183,11 @@ export default function Connections() {
             <div className="flex items-center justify-between px-7 py-6 border-b border-border">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  {currentPlatform === "vinted" ? <ShoppingBag size={20} /> : <Store size={20} />}
+                  <ShoppingBag size={20} />
                 </div>
                 <div>
-                  <p className="font-semibold">
-                    {currentPlatform === "vinted" ? t("modal.connect_vinted") : t("modal.connect_ebay")}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {currentPlatform === "vinted" ? t("modal.vinted_subtitle") : t("modal.ebay_subtitle")}
-                  </p>
+                  <p className="font-semibold">{t("modal.connect_vinted")}</p>
+                  <p className="text-sm text-muted-foreground">{t("modal.vinted_subtitle")}</p>
                 </div>
               </div>
               {!isConnecting && !isPolling && (
@@ -250,34 +226,22 @@ export default function Connections() {
               ) : (
                 <div className="flex flex-col gap-4">
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {currentPlatform === "vinted" ? t("modal.vinted_desc") : t("modal.ebay_desc")}
+                    {t("modal.vinted_desc")}
                   </p>
-
-                  {currentPlatform === "vinted" ? (
-                    <button
-                      onClick={handleVintedConnect}
-                      disabled={isConnecting}
-                      className="mt-1 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-60"
-                    >
-                      {isConnecting ? (
-                        <Loader2 size={17} className="animate-spin" />
-                      ) : (
-                        <>
-                          <ExternalLink size={16} />
-                          {t("modal.open_vinted")}
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleEbayConnect}
-                      disabled={isConnecting}
-                      className="mt-1 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-60"
-                    >
-                      {isConnecting ? <Loader2 size={17} className="animate-spin" /> : t("modal.connect_ebay_btn")}
-                    </button>
-                  )}
-
+                  <button
+                    onClick={handleVintedConnect}
+                    disabled={isConnecting}
+                    className="mt-1 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-60"
+                  >
+                    {isConnecting ? (
+                      <Loader2 size={17} className="animate-spin" />
+                    ) : (
+                      <>
+                        <ExternalLink size={16} />
+                        {t("modal.open_vinted")}
+                      </>
+                    )}
+                  </button>
                   <button onClick={closeModal} className="text-sm text-center text-muted-foreground hover:text-foreground transition-colors py-1">
                     {t("modal.cancel")}
                   </button>
@@ -359,7 +323,7 @@ function PlatformSection({ label, icon, description, accounts, onAdd, onRemove, 
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full border border-border overflow-hidden shrink-0">
                     <img
-                      src={label.toLowerCase() === "vinted" ? "/vinted.jpeg" : "/ebay.png"}
+                      src="/vinted.jpeg"
                       className="w-full h-full object-cover"
                       alt={label}
                     />

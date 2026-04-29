@@ -82,11 +82,6 @@ export async function POST(request) {
           where: (s, { eq: eqFn }) => eqFn(s.id, acc.session_id),
         });
         connectedAccountId = vs?.connectedAccountId ?? null;
-      } else if (acc.platform === "ebay") {
-        const es = await db.query.ebaySessions.findFirst({
-          where: (s, { eq: eqFn }) => eqFn(s.id, acc.session_id),
-        });
-        connectedAccountId = es?.connectedAccountId ?? null;
       }
 
       if (!connectedAccountId) {

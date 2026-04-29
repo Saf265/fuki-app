@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn, signUp } from "@/src/lib/auth-client";
+import { signIn } from "@/src/lib/auth-client";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
@@ -24,7 +24,7 @@ export default function LoginPage() {
             <img src="/logo.png" alt="Fuki" className="w-7 h-7 object-contain" />
           </div>
           <h1 className="text-xl font-semibold tracking-tight">Connexion à Fuki</h1>
-          <p className="text-sm text-muted-foreground mt-1">Automatisez vos ventes Vinted & eBay</p>
+          <p className="text-sm text-muted-foreground mt-1">Automatisez vos ventes Vinted</p>
         </div>
 
         {/* Card */}
